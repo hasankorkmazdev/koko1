@@ -1,0 +1,18 @@
+{
+  "id": "TUR",
+  "name": "Türkiye",
+  "capitalCityId": "TR-06",
+  "gdpPerCapita": 15500,
+  "populationGrowthRate": 0.004,
+  "naturalRelations": { "AZE": 80 },
+  "isRebelState": false,
+  "state": {
+    "controller": "player",
+    "treasury": 50000,
+    "taxRate": 20,
+    "relations": { "AZE": 80 },
+    "allies": [],
+    "atWarWith": [],
+    "stock": { "boron": 1200, "food": 3000, "steel": 500 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "TR-26",
+  "name": "Eskişehir",
+  "originCountryId": "TUR",
+  "position": { "lat": 39.78, "lon": 30.52 },
+  "population": 920000,
+  "slots": 4,
+  "neighbors": ["TR-06", "TR-42", "TR-03", "TR-43", "TR-11", "TR-14"],
+  "railLinks": ["TR-06", "TR-11", "TR-43"],
+  "knownResources": ["boron", "farmland"],
+  "possibleResources": ["coal"],
+  "state": {
+    "ownerId": "TUR",
+    "satisfaction": 70,
+    "taxRate": null,
+    "hiddenResources": ["coal"],
+    "buildings": [
+      { "type": "mine", "resource": "boron" },
+      { "type": "farm", "resource": "farmland" }
+    ],
+    "garrison": { "soldiers": 2000 }
+  }
+}

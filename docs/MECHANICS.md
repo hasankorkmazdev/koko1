@@ -1,0 +1,81 @@
+1. Oyunun amacı tüm ülkeleri ele geçirmek ve görevleri tamamlamak.
+   1. Bir ülke, şehirlerinin %85'i alınınca düşer.
+   2. Başkenti alınmışsa, şehirlerinin %75'i alınınca düşer.
+2. Zaman:
+   1. Oyun durdurulabilir.
+   2. Oyun hızı: 1x, 2x, 5x.
+   3. Oyun kapalıyken zaman akmaz.
+3. Şehir ele geçirme:
+   1. Ordu düşman şehrine gönderilir.
+   2. Ordu varınca savaş otomatik hesaplanır: ordunun gücü, şehrin savunmasıyla (garnizon + savunma binaları) karşılaştırılır.
+   3. Saldıran kazanırsa şehri alır, kaybederse birlikleri kayıp verir.
+4. Bina slotu:
+   1. Her şehrin sınırlı sayıda bina slotu vardır.
+   2. Slot sayısı şehrin nüfusu ve ülkenin zenginliğiyle birlikte belirlenir; sayılar denge aşamasında ayarlanır.
+5. İnşaat maliyeti:
+   1. Bina kurmak para ve malzeme (ör. çelik, çimento) gerektirir.
+   2. Malzeme üretilebilir veya diğer ülkelerden satın alınabilir.
+   3. İnşaat belli bir süre alır; süre oyun zamanıyla akar.
+6. Bina türleri:
+   1. Kaynak çıkarma: maden, petrol kuyusu, tarla
+   2. Sanayi: çelik fabrikası, rafineri, çimento fabrikası, enerji tesisleri, ilaç fabrikası, kimya tesisi, makine fabrikası, elektronik fabrikası
+   3. Gıda: gıda tesisi
+   4. Savunma sanayi: her askeri ürün grubu için ayrı bina (ör. silah fabrikası, uçak fabrikası)
+   5. Askeri: kışla, hava savunma, radar
+   6. Ulaşım: liman, havaalanı
+7. Kaynaklar: [RESOURCES.md](RESOURCES.md)
+8. Diplomasi: [DIPLOMACY.md](DIPLOMACY.md)
+9. Ekonomi: [ECONOMY.md](ECONOMY.md)
+10. Memnuniyet:
+    1. Her şehrin bir memnuniyet değeri vardır.
+    2. Yüksek vergi memnuniyeti düşürür.
+    3. Memnuniyet düşükse şehirde üretim yavaşlar.
+    4. Memnuniyet çok düşerse şehirde isyan çıkar.
+11. İsyan:
+    1. İsyan çıkınca şehirde üretim durur.
+    2. İsyan komşu şehirleri de etkiler; komşu şehirlerin memnuniyeti düşer.
+    3. Oyuncuya isyanı bitirmek için seçenekler sunulur:
+       1. Taviz: xx gün vergi %0 ve üretim %50 düşük.
+       2. Askeri bastırma: Şehre asker gönderilir; isyan hemen biter ama asker kaybedilir ve memnuniyet daha da düşer.
+       3. Yardım paketi: Para ödenir, memnuniyet hemen yükselir.
+    4. Oyuncu belli bir süre içinde seçenek seçmezse şehir elden çıkar ve isyancı bir devlet oluşur.
+    5. Komşu şehirde de isyan başarılı olursa o şehir aynı isyancı devlete katılır.
+    6. İsyancı devleti AI yönetir.
+    7. İsyancı devletin adı isyanın çıktığı ülkeye göre verilir: "<Ülke> İşçi Emekçi Devleti" (ör. Türkiye İşçi Emekçi Devleti).
+    8. İsyancı devlet kurulunca ona geçenler:
+       1. Ülkenin kaynaklarının belli bir kısmı
+       2. Askerlerin belli bir kısmı
+       3. Şehrin nüfusunun tamamı
+12. Nüfus ve gıda:
+    1. Şehirler nüfuslarına göre gıda tüketir.
+    2. Gıda yetmezse memnuniyet düşer.
+    3. Nüfus artış oranı:
+       1. Her ülkenin taban artış oranı gerçek veriden gelir; ülkeler arasındaki fark korunur.
+       2. Taban oran bir oyun çarpanıyla hızlandırılır; çarpan denge aşamasında belirlenir.
+       3. Gıda fazlası artışı hızlandırır, gıda açığı nüfusu azaltır.
+       4. Savaş yaşanan şehirde nüfus azalır.
+    4. Nüfus arttıkça vergi geliri artar.
+    5. Halk tüketimi:
+       1. Nüfus gıda dışında ilaç, yakıt ve elektronik de tüketir.
+       2. Bu ihtiyaçlar karşılanırsa memnuniyet ve vergi geliri artar, karşılanmazsa düşer.
+13. Üretim:
+    1. Girdisi eksik olan bina üretim yapmaz ve alarm durumuna geçer.
+    2. Fabrikalar makineye ihtiyaç duyar.
+    3. Makine üretilebilir veya pazardan satın alınabilir.
+       1. Makinenin bir ömrü vardır.
+       2. Ömrü dolan makine çöp olur.
+       3. Makinesi olmayan fabrika yeni makine gelene kadar üretim yapmaz ve alarm durumuna geçer.
+    4. Fabrikalar makine dışında yan malzemelere de ihtiyaç duyar.
+       1. Her fabrika, ne üretirse üretsin, çalıştığı her gün sarf malzemesi harcar.
+    5. Birden fazla ürün üretebilen binada oyuncu ne üretileceğini seçer.
+    6. Kombina bonusu:
+       1. Biri diğerine girdi sağlayan iki fabrika aynı şehirde olursa bağlantı başına +%2,5 verim kazanır.
+       2. Bağlantılar reçetelerden otomatik çıkar.
+14. Stok:
+    1. Her ülkenin tek bir genel stoğu vardır; tüm şehirlerin üretimi buraya gider.
+    2. Binalar girdilerini genel stoktan alır.
+    3. Stoğun kapasite sınırı yoktur.
+    4. Şehir ele geçirilince, şehrin ülke üretimindeki payı kadar stok yeni sahibine geçer (ör. şehir üretimin %10'unu yapıyorsa stoğun %10'u).
+15. Enerji: [ENERGY.md](ENERGY.md)
+16. Şehir ve tesis adları düzenlenebilir.
+17. Her ülkenin bir ekonomik index ve bir askeri index değeri vardır.
