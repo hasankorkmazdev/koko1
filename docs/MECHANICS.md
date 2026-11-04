@@ -1,6 +1,8 @@
 1. Oyunun amacı tüm ülkeleri ele geçirmek ve görevleri tamamlamak.
    1. Bir ülke, şehirlerinin %85'i alınınca düşer.
    2. Başkenti alınmışsa, şehirlerinin %75'i alınınca düşer.
+   3. Ülke düşünce kalan şehirleri, ülkeyi düşüren şehri alan ülkeye geçer.
+   4. Düşen ülkenin kalan hazinesi ve stoğu da bu ülkeye geçer.
 2. Zaman:
    1. Oyun durdurulabilir.
    2. Oyun hızı: 1x, 2x, 5x.
@@ -17,12 +19,11 @@
    2. Malzeme üretilebilir veya diğer ülkelerden satın alınabilir.
    3. İnşaat belli bir süre alır; süre oyun zamanıyla akar.
 6. Bina türleri:
-   1. Kaynak çıkarma: maden, petrol kuyusu, tarla
+   1. Kaynak çıkarma: maden, petrol kuyusu, doğalgaz kuyusu, tarla
    2. Sanayi: çelik fabrikası, rafineri, çimento fabrikası, enerji tesisleri, ilaç fabrikası, kimya tesisi, makine fabrikası, elektronik fabrikası
-   3. Gıda: gıda tesisi
-   4. Savunma sanayi: her askeri ürün grubu için ayrı bina (ör. silah fabrikası, uçak fabrikası)
-   5. Askeri: kışla, hava savunma, radar
-   6. Ulaşım: liman, havaalanı
+   3. Savunma sanayi: her askeri ürün grubu için ayrı bina (ör. silah fabrikası, uçak fabrikası)
+   4. Askeri: kışla, hava savunma, radar
+   5. Ulaşım: liman, havaalanı
 7. Kaynaklar: [RESOURCES.md](RESOURCES.md)
 8. Diplomasi: [DIPLOMACY.md](DIPLOMACY.md)
 9. Ekonomi: [ECONOMY.md](ECONOMY.md)
@@ -31,6 +32,7 @@
     2. Yüksek vergi memnuniyeti düşürür.
     3. Memnuniyet düşükse şehirde üretim yavaşlar.
     4. Memnuniyet çok düşerse şehirde isyan çıkar.
+    5. Şehir el değiştirince memnuniyeti düşük başlar.
 11. İsyan:
     1. İsyan çıkınca şehirde üretim durur.
     2. İsyan komşu şehirleri de etkiler; komşu şehirlerin memnuniyeti düşer.
@@ -72,10 +74,21 @@
        1. Biri diğerine girdi sağlayan iki fabrika aynı şehirde olursa bağlantı başına +%2,5 verim kazanır.
        2. Bağlantılar reçetelerden otomatik çıkar.
 14. Stok:
-    1. Her ülkenin tek bir genel stoğu vardır; tüm şehirlerin üretimi buraya gider.
+    1. Her ülkenin tek bir genel stoğu vardır; devlet tesislerinin üretimi ve şirket tesislerindeki devlet payı buraya gider.
     2. Binalar girdilerini genel stoktan alır.
     3. Stoğun kapasite sınırı yoktur.
     4. Şehir ele geçirilince, şehrin ülke üretimindeki payı kadar stok yeni sahibine geçer (ör. şehir üretimin %10'unu yapıyorsa stoğun %10'u).
 15. Enerji: [ENERGY.md](ENERGY.md)
 16. Şehir ve tesis adları düzenlenebilir.
 17. Her ülkenin bir ekonomik index ve bir askeri index değeri vardır.
+18. Tesis seviyesi:
+    1. Her tesisin kendi deneyimi ve seviyesi vardır.
+    2. Yeni tesis seviye 1'de ve sıfır deneyimle başlar.
+    3. Tesis ne kadar çalışırsa o kadar deneyim kazanır (ör. %60 hızla çalışıyorsa deneyimi de %60 hızla artar); duran tesis kazanmaz.
+    4. Deneyim dolunca sonraki seviye açılır.
+    5. Yükseltme (AR-GE) para, malzeme ve süre ister; maliyet seviye yükseldikçe artar.
+    6. Yükseltme tek tek veya toplu yapılır (ör. hazır olan tüm çelik fabrikaları).
+    7. Seviye başına üretim hızı artar (ör. +%25); girdi ve enerji tüketimi de aynı oranda artar.
+    8. Şirket kendi tesisini kendi parasıyla otomatik yükseltir; devlet payı değişmez.
+    9. Ele geçirilen tesis seviyesini ve deneyimini korur.
+    10. Tesis kapanırsa seviyesi ve deneyimi de gider.

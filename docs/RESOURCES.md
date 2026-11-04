@@ -52,3 +52,14 @@
    9. Gıda ← tarım arazisi
    10. Alüminyum: pazardan satın alınır
 8. Gübre varsa gıda üretimi belli bir oranda artar; oran denge aşamasında belirlenir.
+9. Çıkarma tesisleri:
+   1. Çıkarma tesisi makine, sarf malzemesi veya enerji kullanmaz; sabit hızla üretir.
+   2. Bir şehirde her kaynak için tek çıkarma tesisi kurulur.
+   3. Üretim hızı (sayılar denge aşamasında ayarlanır):
+      1. Demir, kömür, petrol, doğalgaz: günde 3
+      2. Bakır, kireçtaşı, bor: günde 2
+      3. Krom, lityum: günde 1
+      4. Titanyum, uranyum: 2 günde 1
+      5. Altın: 5 günde 1
+      6. Tarım arazisi: günde 5 gıda
+   4. Bor hiçbir reçetede kullanılmaz, yalnızca pazarda satılır.
