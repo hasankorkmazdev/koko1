@@ -11,12 +11,18 @@
       1. Her kaynağın veri dosyasında bir taban fiyatı vardır.
       2. Kaynak satın alındıkça fiyatı yükselir, satıldıkça düşer.
       3. Fiyat zamanla yavaşça taban fiyata geri döner.
-   5. AI ülkeleri de aynı pazarda alıp satar.
+   5. AI ülkeleri aynı pazarda otomatik alıp satar; oyuncu yalnızca elle alıp satar, hazine kendiliğinden işlem yapmaz.
    6. Yol ücreti:
       1. Pazardaki her satış teklifi bir ülkeye aittir.
       2. Yol ücretini alıcı öder; piyasa fiyatına eklenir.
       3. Yol ücreti alıcının başkenti ile satıcının başkenti arasındaki mesafeye göre hesaplanır.
    7. Başkenti alınan ülkenin ticareti askıya alınır; başkent geri alınınca ticaret tekrar açılır.
+   8. Satış teklifi:
+      1. Satılan mal stoktan çıkar ve teklif olarak pazara konur; para alıcı çıkınca gelir.
+      2. Alıcı piyasa fiyatını ve yol ücretini öder; piyasa fiyatı satıcıya gider.
+      3. Teklif sahibi satılmamış malını geri çekebilir.
+      4. Oyuncu alacağı teklifi kendi seçer ve en fazla o teklifin miktarı kadar alır.
+      5. AI ülkeleri en yakın tekliften başlayarak alır.
 3. Sevkiyat:
    1. Şehirler arası sevkiyat yoktur; sevkiyat yalnızca ülkeler arası ticarette yapılır.
    2. Satın alınan mal alıcı ülkenin genel stoğuna gelir.
@@ -29,6 +35,12 @@
       4. Hava: hız 5x, kapasite 0,25x, maliyet 5x; iki uçta da havaalanı gerekir.
    6. Hız yolda geçen süreyi, kapasite bir seferde taşınan miktarı, maliyet taşıma ücreti çarpanını belirler.
    7. Liman ve havaalanı şehirde slot kaplayan binalardır.
+   8. Oyun kullanılabilir en ucuz ulaşım türünü kendisi seçer; ücret başkentler arası mesafeye göre gösterilir.
+   9. Yol süresi başkentler arası mesafeden hesaplanır; sayılar denge aşamasında ayarlanır (ör. karayolu günde 100 km).
+   10. Alımın parası baştan ödenir, mal yol süresi sonunda stoğa girer.
+   11. Miktar kapasiteyi aşarsa mal parça parça gelir: ilk sefer yol süresi sonunda, sonra her gün bir sefer.
+   12. Yol alıcının düşmanı olan ülkelerden geçemez; savaştaki iki ülke birbirinden alım yapamaz.
+   13. Deniz yolunda şimdilik yalnızca düşman limanına gidilemez; düşman suları ve abluka ordu tasarlanırken eklenir.
 4. Ekonomik olaylar:
    1. Olay tipleri:
       1. Doğa olayları:

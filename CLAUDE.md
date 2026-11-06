@@ -2,7 +2,7 @@
 
 Android ve iOS için harita tabanlı strateji oyunu. Oyuncu bir ülke seçer ve o ülkeyi yönetir: şehirlere fabrikalar kurar, ekonomiyi büyütür, ordusunu geliştirir.
 
-> Durum: Proje başlangıç aşamasında. Henüz kod yok. Aşağıdaki "Teknoloji" bölümü **varsayılan öneridir**; karar kesinleşince güncelle.
+> Durum: Unity projesi kuruldu ve telefonda çalışıyor. Ekonomi çekirdeği, tesis kurma ve seviye mantığı, bölge haritası, üst bar, il paneli, Tesis Kur, kaynak penceresi, Stok ve Pazar hazır. Enerji ve Diplomasi ekranları, şirketler, olaylar, isyan, diplomasi, AI, ordu ve savaş henüz koda geçmedi.
 
 ## Oyun Konsepti
 
@@ -12,9 +12,9 @@ Android ve iOS için harita tabanlı strateji oyunu. Oyuncu bir ülke seçer ve 
 - **Ordu:** Birlik türleri (kara/hava/deniz), üretim, geliştirme (teknoloji/seviye) ve ileride savaş mekaniği.
 - **Zaman:** Gerçek zamanlı veya tur tabanlı olacağı henüz belirlenmedi (bkz. Açık Kararlar).
 
-## Teknoloji (varsayılan öneri)
+## Teknoloji
 
-- **Motor:** Unity (C#), 2D. Alternatif: Godot 4. Tek kod tabanı ile Android + iOS.
+- **Motor:** Unity (C#), 2D. Tek kod tabanı ile Android + iOS. Seçilme nedeni: yüksek hesaplama performansı (IL2CPP, gerektiğinde Burst ve Job System) ve Windows'tan iOS'a bulut derleme.
 - **Harita:** Ülke/şehir verisi motordan bağımsız veri dosyalarında (JSON/ScriptableObject); harita çizimi bu veriden üretilir.
 - **Veri odaklı tasarım:** Ülkeler, şehirler, fabrika türleri, birlikler ve maliyetler koda gömülmez; veri dosyalarından okunur. Denge ayarı kod değişikliği gerektirmemeli.
 - **Kayıt:** Yerel kayıt (JSON) ile başla; bulut/hesap sistemi sonraya.
@@ -25,6 +25,7 @@ Android ve iOS için harita tabanlı strateji oyunu. Oyuncu bir ülke seçer ve 
 - **Tek yönlü veri akışı:** Oyun durumu (GameState) -> UI. UI doğrudan state'i değiştirmez, komut/olay (command) gönderir.
 - **Deterministik mantık:** Rastgelelik tek bir seed'li RNG üzerinden; aynı girdi aynı sonucu versin (test ve ileride çok oyunculu için).
 - **Mobil performans:** Update döngüsünde ağır iş yapma, nesne havuzu (pooling) kullan, her karede allocation üretme. Hedef: orta seviye cihazlarda 60 FPS.
+- **Hesaplama performansı öncelikli:** Ekonomi her karede değil oyun gününde bir hesaplanır. Veri düz dizilerde tutulur, hesaplar tam sayıyla yapılır, ülkeler karelere dağıtılır, AI seyrek karar verir. Performans iddiaları gerçek telefonda ölçülür.
 - **Dokunmatik öncelikli UI:** Tüm etkileşimler tek parmak/çift parmak hareketiyle çalışmalı; küçük hedeflerden kaçın (min ~48dp).
 
 ## Önerilen Klasör Yapısı
@@ -35,14 +36,16 @@ GeoWar/
   docs/            # Tasarım dokümanları (GDD, denge tabloları)
   Assets/
     Scripts/
-      Core/        # Oyun durumu, komutlar, zaman
-      Economy/     # Fabrikalar, kaynaklar, üretim
-      Military/    # Birlikler, geliştirmeler, savaş
-      Map/         # Ülke/şehir verisi, harita etkileşimi
-      UI/
-    Data/          # Ülke, şehir, fabrika, birlik tanımları
-    Art/
-  Tests/
+      Simulation/  # Oyun mantığı; Unity'ye bağlı değil
+      Map/         # Harita verisi, üçgenleme, il bulma; Unity'ye bağlı değil
+      Game/        # Unity tarafı: çizim, kamera, oyun döngüsü
+      Game/UI/     # Arayüz (UI Toolkit); ekran kodla kurulur, stiller GeoWar.uss dosyasındadır
+      Editor/      # Proje ayarları ve komut satırından derleme
+    Scenes/        # Boş başlangıç sahnesi; gerisini GameBootstrap kurar
+    Data/Resources/ # Ekonomi, arayüz (ui.json) ve harita verisi
+    Art/Resources/ # Gölgelendiriciler, yazı tipleri, arayüz stilleri
+  Tests/           # Unity'siz çalışan oyun mantığı testleri
+  Tools/           # Ölçüm, harita üretimi, derleme kontrolü
 ```
 
 ## Kod Standartları
@@ -64,17 +67,29 @@ GeoWar/
 
 ## Komutlar
 
-Motor kesinleşince doldurulacak:
-
 ```
-# Build (Android):   TODO
-# Build (iOS):       TODO
-# Testler:           TODO
+# Testler:              dotnet run --project Tests/SimTests -c Release
+# Hesap ölçümü:         dotnet run --project Tools/SimBenchmark -c Release
+# Unity derleme kontrolü: dotnet build Tools/UnityCompileCheck -c Release
+# Harita üretimi:       dotnet run --project Tools/MapBuilder -c Release -- <admin1.geojson> Assets/Data/Resources/map_region.bytes region
+# Oyunu aç (Windows):   powershell -ExecutionPolicy Bypass -File Tools/Run.ps1
+# Oyunu aç (telefon):   powershell -ExecutionPolicy Bypass -File Tools/Run.ps1 -Phone
+# Unity:                "C:\Program Files\Unity\Hub\Editor\6000.3.11f1\Editor\Unity.exe"
+# Build (Android):      <Unity> -batchmode -nographics -projectPath <repo> -buildTarget Android -executeMethod GeoWar.EditorTools.GeoWarBuild.BuildAndroid -logFile <log>
+# Build (Windows testi): <Unity> -batchmode -nographics -projectPath <repo> -buildTarget Win64 -executeMethod GeoWar.EditorTools.GeoWarBuild.BuildWindows -logFile <log>
+# Otomatik Windows testi: Build/Windows/GeoWar.exe -geowarTestSeconds 22 -geowarScreenshot <png> -screen-width 390 -screen-height 844 -screen-fullscreen 0 -logFile <log>
+# Dünya ölçeği testi:   aynı komuta -geowarPerfTest eklenir (200 ülke, 20.000 tesis, arayüzsüz)
+# Telefon bağlantısı:   powershell -ExecutionPolicy Bypass -File Tools\AdbWifi.ps1 [-Pair]
+# adb:                  <Unity>\..\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe
+# Telefona kurma:       adb install -r Build/Android/GeoWar.apk
+# Oyunu açma:           adb shell am start -n com.geowar.game/com.unity3d.player.UnityPlayerGameActivity
+# Ölçüm satırları:      günlükte GeoWarStartup, GeoWarPerf, GeoWarUi (telefonda: adb logcat -s Unity:I, hatalar: adb logcat -s Unity:E)
+# Build (iOS):          TODO, Android sürümü oturunca
 ```
 
 ## Açık Kararlar
 
-- [ ] Motor: Unity mi, Godot mu?
+- [x] Motor: Unity (2026-11-05).
 - [ ] Gerçek zamanlı mı, tur tabanlı mı?
 - [ ] Tek oyunculu mu, çok oyunculu (online) mi? (Çok oyunculu ise sunucu mimarisi baştan planlanmalı.)
 - [ ] Harita: gerçek dünya haritası mı, kurgusal mı? Veri kaynağı (ör. Natural Earth)?

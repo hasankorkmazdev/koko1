@@ -5,8 +5,9 @@
    4. Düşen ülkenin kalan hazinesi ve stoğu da bu ülkeye geçer.
 2. Zaman:
    1. Oyun durdurulabilir.
-   2. Oyun hızı: 1x, 2x, 5x.
-   3. Oyun kapalıyken zaman akmaz.
+   2. Oyun hızı: 1x, 2x, 3x.
+   3. 1x hızda bir oyun günü 5 saniye sürer.
+   4. Oyun kapalıyken zaman akmaz.
 3. Şehir ele geçirme:
    1. Ordu düşman şehrine gönderilir.
    2. Ordu varınca savaş otomatik hesaplanır: ordunun gücü, şehrin savunmasıyla (garnizon + savunma binaları) karşılaştırılır.
@@ -92,3 +93,8 @@
     8. Şirket kendi tesisini kendi parasıyla otomatik yükseltir; devlet payı değişmez.
     9. Ele geçirilen tesis seviyesini ve deneyimini korur.
     10. Tesis kapanırsa seviyesi ve deneyimi de gider.
+19. Şehir sayısı:
+    1. Her ülkenin şehir sayısı büyüklüğüne ve nüfusuna göre belirlenir.
+    2. Her ülkenin hangi idari seviyeyi şehir sayacağı veri dosyasında tanımlanır.
+    3. Birimleri çok küçük olan ülkelerde küçük birimler birleştirilir (ör. Azerbaycan'ın rayonları).
+    4. Birimleri çok büyük olan ülkelerde birimler daha ayrıntılı bir veri kaynağıyla bölünür.
