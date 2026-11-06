@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unity kodunu editör açmadan Unity'nin kendi kütüphaneleriyle derleyip kontrol eder. Çalıştırılmaz. -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UnityManaged>C:\Program Files\Unity\Hub\Editor\6000.3.11f1\Editor\Data\Managed\UnityEngine</UnityManaged>
+    <NoWarn>$(NoWarn);CS1701;CS1702</NoWarn>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Assets\Scripts\**\*.cs" LinkBase="Scripts" />
+    <Reference Include="$(UnityManaged)\*.dll" Private="false" />
+  </ItemGroup>
+
+</Project>

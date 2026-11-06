@@ -1,0 +1,17 @@
+{
+    "name": "GeoWar.Game",
+    "rootNamespace": "GeoWar.Game",
+    "references": [
+        "GeoWar.Simulation",
+        "GeoWar.Map"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

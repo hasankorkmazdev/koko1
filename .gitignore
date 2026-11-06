@@ -1,0 +1,42 @@
+# .NET araçları
+bin/
+obj/
+
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]serSettings/
+/[Mm]emoryCaptures/
+/.utmp/
+*.csproj.user
+/*.csproj
+/*.sln
+/*.slnx
+*.apk
+*.aab
+*.unitypackage
+*.pdb
+*.mdb
+*.log
+sysinfo.txt
+
+# İmza anahtarları ve sertifikalar depoya girmez
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Editör ve işletim sistemi
+.vs/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Yerel Claude Code ayarları
+.claude/settings.local.json

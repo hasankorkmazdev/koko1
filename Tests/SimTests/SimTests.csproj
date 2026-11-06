@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseAppHost>false</UseAppHost>
+    <RootNamespace>GeoWar.Tests</RootNamespace>
+    <AssemblyName>SimTests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Assets\Scripts\Simulation\**\*.cs" LinkBase="Simulation" />
+    <Compile Include="..\..\Assets\Scripts\Map\**\*.cs" LinkBase="Map" />
+    <Compile Include="..\..\Tools\Shared\*.cs" LinkBase="Shared" />
+    <Compile Include="..\..\Assets\Scripts\Game\UI\NumberFormat.cs" LinkBase="Ui" />
+    <Compile Include="..\..\Assets\Scripts\Game\UI\CityBrief.cs" LinkBase="Ui" />
+    <Compile Include="..\..\Assets\Scripts\Game\UI\SvgPathParser.cs" LinkBase="Ui" />
+    <Compile Include="..\..\Assets\Scripts\Game\UI\UiData.cs" LinkBase="Ui" />
+    <Compile Include="..\..\Assets\Scripts\Game\UI\ResourceBar.cs" LinkBase="Ui" />
+  </ItemGroup>
+
+</Project>

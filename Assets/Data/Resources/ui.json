@@ -1,0 +1,250 @@
+{
+  "PlayerCountry": "TR",
+  "StartYear": 2026,
+  "StartMonth": 5,
+  "StartDay": 4,
+  "Months": ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+  "Icons": [
+    { "Key": "wheat", "Path": "M12 21V8 M12 8c-2-1-3-3-3-5c2 0 3 1.500 3 3 M12 8c2-1 3-3 3-5c-2 0-3 1.500-3 3 M12 13c-2-1-4-2-5-4c2 0 4 1 5 3 M12 13c2-1 4-2 5-4c-2 0-4 1-5 3 M12 18c-2-1-4-2-5-4c2 0 4 1 5 3 M12 18c2-1 4-2 5-4c-2 0-4 1-5 3" },
+    { "Key": "steel", "Path": "M5 4h14v3h-5v10h5v3H5v-3h5V7H5z" },
+    { "Key": "fuel", "Path": "M12 3c4 5 6 8 6 11a6 6 0 1 1-12 0c0-3 2-6 6-11z" },
+    { "Key": "gear", "Path": "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2" },
+    { "Key": "chip", "Path": "M7 7h10v10H7z M10 3v4 M14 3v4 M10 17v4 M14 17v4 M3 10h4 M3 14h4 M17 10h4 M17 14h4" },
+    { "Key": "flask", "Path": "M9 3h6 M10 3v6L5 19a1.500 1.500 0 0 0 1.300 2h11.400a1.500 1.500 0 0 0 1.300-2L14 9V3" },
+    { "Key": "bag", "Path": "M7 4h10l2 4v12H5V8z M5 8h14" },
+    { "Key": "wrench", "Path": "M14 6a4 4 0 0 0 5 5L11 19l-3 1-2-2 1-3 8-8z" },
+    { "Key": "nut", "Path": "M12 3l8 4.500v9L12 21l-8-4.500v-9z M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z" },
+    { "Key": "ore", "Path": "M4 18l4-9 5 3 3-6 4 12z" },
+    { "Key": "bolt", "Path": "M13 3L5 14h6l-1 7 8-11h-6z" },
+    { "Key": "box", "Path": "M3 8l9-5 9 5v8l-9 5-9-5z M3 8l9 5 9-5 M12 13v8" },
+    { "Key": "chart", "Path": "M3 20h18 M6 20v-7 M12 20V5 M18 20v-10" },
+    { "Key": "building", "Path": "M4 21V8l8-5v18 M12 21V10l8 3v8 M2 21h20" },
+    { "Key": "flag", "Path": "M6 21V4 M6 4h12l-3 4 3 4H6" },
+    { "Key": "shield", "Path": "M12 3l8 3v6c0 5-3.500 8-8 9c-4.500-1-8-4-8-9V6z" },
+    { "Key": "swords", "Path": "M5 5l14 14 M19 5L5 19 M3 9l6-6 M21 9l-6-6" },
+    { "Key": "warning", "Path": "M12 2l10 19H2z M11 9v6h2V9z M11 17v2h2v-2z" },
+    { "Key": "upgrade", "Path": "M12 3l8 9h-5v9H9v-9H4z" },
+    { "Key": "offices", "Path": "M3 21V9l7-4v16z M12 21V3l9 4v14z" },
+    { "Key": "plus", "Path": "M12 5v14M5 12h14" },
+    { "Key": "minus", "Path": "M5 12h14" },
+    { "Key": "fit", "Path": "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" },
+    { "Key": "star", "Path": "M12 3l2.700 6 6.300.7-4.700 4.300 1.300 6.500L12 17.200 6.400 20.500l1.300-6.500L3 9.700 9.300 9z" },
+    { "Key": "close", "Path": "M6 6l12 12M18 6L6 18" },
+    { "Key": "back", "Path": "M15 5l-7 7 7 7" },
+    { "Key": "mine", "Path": "M4 20L14 10 M9 4c5-1 9 1 11 7c-3-3-6-4-9-4z" },
+    { "Key": "factory", "Path": "M3 21V10l6 4v-4l6 4V4h6v17z" },
+    { "Key": "well", "Path": "M8 21l4-16 4 16 M9.500 15h5 M6 21h12 M12 5V2" },
+    { "Key": "anchor", "Path": "M12 8a2 2 0 1 0 0-4a2 2 0 1 0 0 4z M12 8v13 M8 11h8 M4 13c0 4 4 8 8 8s8-4 8-8" },
+    { "Key": "plane", "Path": "M3 13l18-8-6 16-3-7z" },
+    { "Key": "weapon", "Path": "M3 10h14l4-2v4l-4 1h-5l-2 5H7l2-5H3z" },
+    { "Key": "pin", "Path": "M9 3h6l-1 6 3 3v2H7v-2l3-3z M12 14v7" }
+  ],
+  "ResourceGroups": [
+    { "Name": "Gıda ve sağlık", "Keys": ["food", "fertilizer", "medicine"] },
+    { "Name": "Temel malzeme", "Keys": ["steel", "cement", "aluminum"] },
+    { "Name": "Petrokimya", "Keys": ["fuel", "chemical", "rubber", "tire"] },
+    { "Name": "Makine ve parça", "Keys": ["machine", "spare", "consumable", "powerUnit"] },
+    { "Name": "Elektronik", "Keys": ["electronics", "battery", "microchip", "cable", "transformer"] },
+    { "Name": "Doğal kaynaklar", "Keys": ["oil", "gas", "coal", "iron", "copper", "chrome", "titanium", "lithium", "boron", "uranium", "limestone", "gold"] }
+  ],
+  "Tabs": [
+    { "Key": "extract", "Label": "Çıkarma", "Note": "Makine, sarf malzemesi ve enerji kullanmaz." },
+    { "Key": "industry", "Label": "Sanayi", "Note": "Makine, sarf malzemesi ve enerji kullanır." },
+    { "Key": "energy", "Label": "Enerji", "Note": "Üretimi şebeke kapasitesiyle sınırlıdır." },
+    { "Key": "defense", "Label": "Savunma", "Note": "Makine, sarf malzemesi ve enerji kullanır." },
+    { "Key": "military", "Label": "Askeri", "Note": "" },
+    { "Key": "transport", "Label": "Ulaşım", "Note": "" }
+  ],
+  "BuildMaterials": ["steel", "cement", "machine"],
+  "MarketAmounts": [1, 10, 100, 1000, 10000],
+  "Transports": [
+    { "Key": "road", "Name": "Karayolu" },
+    { "Key": "sea", "Name": "Deniz" },
+    { "Key": "air", "Name": "Hava" }
+  ],
+  "Buildings": [
+    { "Key": "iron_mine", "Name": "Demir madeni", "Icon": "mine", "Deposit": "Demir" },
+    { "Key": "coal_mine", "Name": "Kömür madeni", "Icon": "mine", "Deposit": "Kömür" },
+    { "Key": "copper_mine", "Name": "Bakır madeni", "Icon": "mine", "Deposit": "Bakır" },
+    { "Key": "limestone_mine", "Name": "Kireçtaşı madeni", "Icon": "mine", "Deposit": "Kireçtaşı" },
+    { "Key": "boron_mine", "Name": "Bor madeni", "Icon": "mine", "Deposit": "Bor" },
+    { "Key": "chrome_mine", "Name": "Krom madeni", "Icon": "mine", "Deposit": "Krom" },
+    { "Key": "lithium_mine", "Name": "Lityum madeni", "Icon": "mine", "Deposit": "Lityum" },
+    { "Key": "titanium_mine", "Name": "Titanyum madeni", "Icon": "mine", "Deposit": "Titanyum" },
+    { "Key": "uranium_mine", "Name": "Uranyum madeni", "Icon": "mine", "Deposit": "Uranyum" },
+    { "Key": "gold_mine", "Name": "Altın madeni", "Icon": "mine", "Deposit": "Altın" },
+    { "Key": "oil_well", "Name": "Petrol kuyusu", "Icon": "well", "Deposit": "Petrol" },
+    { "Key": "gas_well", "Name": "Doğalgaz kuyusu", "Icon": "well", "Deposit": "Doğalgaz" },
+    { "Key": "farm", "Name": "Tarla", "Icon": "wheat", "Deposit": "Tarım arazisi" },
+    { "Key": "steel_factory", "Name": "Çelik fabrikası", "Icon": "factory" },
+    { "Key": "refinery", "Name": "Rafineri", "Icon": "factory" },
+    { "Key": "cement_factory", "Name": "Çimento fabrikası", "Icon": "factory" },
+    { "Key": "medicine_factory", "Name": "İlaç fabrikası", "Icon": "flask" },
+    { "Key": "chemical_plant", "Name": "Kimya tesisi", "Icon": "flask" },
+    { "Key": "machine_factory", "Name": "Makine fabrikası", "Icon": "factory" },
+    { "Key": "electronics_factory", "Name": "Elektronik fabrikası", "Icon": "factory" },
+    { "Key": "coal_plant", "Name": "Kömür santrali", "Icon": "bolt", "Produces": "1 kömür → 2 enerji, 1 gün", "ProducesIcon": "bolt" },
+    { "Key": "gas_plant", "Name": "Doğalgaz santrali", "Icon": "bolt", "Produces": "1 doğalgaz → 3 enerji, 1 gün", "ProducesIcon": "bolt" },
+    { "Key": "nuclear_plant", "Name": "Nükleer santral", "Icon": "bolt", "Produces": "1 uranyum → 20 enerji, 1 gün", "ProducesIcon": "bolt" },
+    { "Key": "solar_plant", "Name": "Güneş enerjisi santrali", "Icon": "bolt", "Produces": "Enerji, yakıt gerektirmez", "ProducesIcon": "bolt" },
+    { "Key": "wind_plant", "Name": "Rüzgar enerjisi santrali", "Icon": "bolt", "Produces": "Enerji, yakıt gerektirmez", "ProducesIcon": "bolt" },
+    { "Key": "weapon_factory", "Name": "Silah fabrikası", "Icon": "weapon", "Produces": "Reçetesi henüz yok" },
+    { "Key": "aircraft_factory", "Name": "Uçak fabrikası", "Icon": "plane", "Produces": "Reçetesi henüz yok" },
+    { "Key": "barracks", "Name": "Kışla", "Icon": "shield", "Produces": "Henüz tasarlanmadı" },
+    { "Key": "air_defense", "Name": "Hava savunma", "Icon": "shield", "Produces": "Henüz tasarlanmadı" },
+    { "Key": "radar", "Name": "Radar", "Icon": "shield", "Produces": "Henüz tasarlanmadı" },
+    { "Key": "port", "Name": "Liman", "Icon": "anchor", "Produces": "Deniz sevkiyatı", "ProducesIcon": "anchor", "Note": "Sevkiyat için iki uçta da liman gerekir." },
+    { "Key": "airport", "Name": "Havaalanı", "Icon": "plane", "Produces": "Hava sevkiyatı", "ProducesIcon": "plane", "Note": "Sevkiyat için iki uçta da havaalanı gerekir." }
+  ],
+  "Resources": [
+    { "Key": "food", "Name": "Gıda", "Icon": "wheat", "Tint": "#E9C46A" },
+    { "Key": "steel", "Name": "Çelik", "Icon": "steel", "Tint": "#B8C7CE" },
+    { "Key": "cement", "Name": "Çimento", "Icon": "bag", "Tint": "#D1C7B7" },
+    { "Key": "fuel", "Name": "Yakıt", "Icon": "fuel", "Tint": "#F4A259" },
+    { "Key": "machine", "Name": "Makine", "Icon": "gear", "Tint": "#9FBCC7", "LowWarning": 20 },
+    { "Key": "consumable", "Name": "Sarf malzemesi", "Icon": "wrench", "Tint": "#F08FB0" },
+    { "Key": "spare", "Name": "Yedek parça", "Icon": "nut", "Tint": "#C9B6F2" },
+    { "Key": "electronics", "Name": "Elektronik", "Icon": "chip", "Tint": "#9DBB6A" },
+    { "Key": "medicine", "Name": "İlaç", "Icon": "flask", "Tint": "#8ED1C8" },
+    { "Key": "chemical", "Name": "Kimyasal", "Icon": "flask", "Tint": "#B5E48C" },
+    { "Key": "fertilizer", "Name": "Gübre", "Icon": "bag", "Tint": "#A7C957" },
+    { "Key": "rubber", "Name": "Sentetik kauçuk", "Icon": "fuel", "Tint": "#B9B3C2" },
+    { "Key": "tire", "Name": "Lastik", "Icon": "nut", "Tint": "#A8B3C4" },
+    { "Key": "powerUnit", "Name": "Güç ünitesi", "Icon": "bolt", "Tint": "#FFD166" },
+    { "Key": "battery", "Name": "Batarya", "Icon": "bolt", "Tint": "#80ED99" },
+    { "Key": "microchip", "Name": "Mikroçip", "Icon": "chip", "Tint": "#64DFDF" },
+    { "Key": "cable", "Name": "Kablo", "Icon": "wrench", "Tint": "#F6BD60" },
+    { "Key": "transformer", "Name": "Trafo", "Icon": "bolt", "Tint": "#F28482" },
+    { "Key": "aluminum", "Name": "Alüminyum", "Icon": "steel", "Tint": "#CED4DA" },
+    { "Key": "oil", "Name": "Petrol", "Icon": "fuel", "Tint": "#ADB5BD" },
+    { "Key": "gas", "Name": "Doğalgaz", "Icon": "fuel", "Tint": "#90E0EF" },
+    { "Key": "coal", "Name": "Kömür", "Icon": "ore", "Tint": "#B4B4B4" },
+    { "Key": "iron", "Name": "Demir", "Icon": "ore", "Tint": "#E5989B" },
+    { "Key": "copper", "Name": "Bakır", "Icon": "ore", "Tint": "#F4A261" },
+    { "Key": "chrome", "Name": "Krom", "Icon": "ore", "Tint": "#CDB4DB" },
+    { "Key": "titanium", "Name": "Titanyum", "Icon": "ore", "Tint": "#BDE0FE" },
+    { "Key": "lithium", "Name": "Lityum", "Icon": "ore", "Tint": "#B9FBC0" },
+    { "Key": "boron", "Name": "Bor", "Icon": "ore", "Tint": "#FFC8DD" },
+    { "Key": "uranium", "Name": "Uranyum", "Icon": "ore", "Tint": "#D9ED92" },
+    { "Key": "limestone", "Name": "Kireçtaşı", "Icon": "ore", "Tint": "#EDEDE9" },
+    { "Key": "gold", "Name": "Altın", "Icon": "ore", "Tint": "#F9C74F" }
+  ],
+  "StartBar": ["food", "steel", "cement", "fuel", "machine", "consumable", "spare", "electronics", "oil", "gas", "chemical", "coal", "iron", "copper", "chrome", "limestone"],
+  "Countries": [
+    { "Key": "TR", "Name": "TÜRKİYE", "Title": "Türkiye", "Lon": 35, "Lat": 39, "Relation": "own", "Capital": "TR-06" },
+    { "Key": "GR", "Name": "YUNANİSTAN", "Title": "Yunanistan", "Lon": 23.9, "Lat": 39.4, "Relation": "peace", "Capital": "GRC-2884" },
+    { "Key": "BG", "Name": "BULGARİSTAN", "Title": "Bulgaristan", "Lon": 25.3, "Lat": 42.7, "Relation": "peace", "Capital": "BGR-2243" },
+    { "Key": "GE", "Name": "GÜRCİSTAN", "Title": "Gürcistan", "Lon": 43.5, "Lat": 42, "Relation": "peace", "Capital": "GEO-3036" },
+    { "Key": "AM", "Name": "ERMENİSTAN", "Title": "Ermenistan", "Lon": 45, "Lat": 40.2, "Relation": "peace", "Capital": "ARM-1675" },
+    { "Key": "AZ", "Name": "AZERBAYCAN", "Title": "Azerbaycan", "Lon": 47.3, "Lat": 41, "Relation": "ally", "Capital": "AZE-1689", "Score": 80 },
+    { "Key": "IR", "Name": "İRAN", "Title": "İran", "Lon": 47.5, "Lat": 35.5, "Relation": "peace", "Capital": "IRN-3216" },
+    { "Key": "IQ", "Name": "IRAK", "Title": "Irak", "Lon": 43.6, "Lat": 33.4, "Relation": "peace", "Capital": "IRQ-3063" },
+    { "Key": "SY", "Name": "SURİYE", "Title": "Suriye", "Lon": 38.8, "Lat": 35, "Relation": "peace", "Capital": "SYR-4843" }
+  ],
+  "SeaLabels": [
+    { "Name": "KARADENİZ", "Lon": 34.5, "Lat": 43.2, "FontSize": 15, "LetterSpacing": 5 },
+    { "Name": "AKDENİZ", "Lon": 31.5, "Lat": 34.81, "FontSize": 15, "LetterSpacing": 5 },
+    { "Name": "EGE", "Lon": 25.5, "Lat": 38.31, "FontSize": 12, "LetterSpacing": 2 }
+  ],
+  "Flags": [
+    {
+      "Key": "TR",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#E30A17" },
+        { "Path": "M6 10a5 5 0 1 0 10 0a5 5 0 1 0-10 0z", "Fill": "#FFFFFF" },
+        { "Path": "M8.250 10a4 4 0 1 0 8 0a4 4 0 1 0-8 0z", "Fill": "#E30A17" },
+        { "Path": "M14.500 10L16.190 9.410L16.230 7.620L17.310 9.050L19.020 8.530L18 10L19.020 11.470L17.310 10.950L16.230 12.380L16.190 10.590Z", "Fill": "#FFFFFF" }
+      ]
+    },
+    {
+      "Key": "GR",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#0D5EAF" },
+        { "Path": "M0 2.222H30V4.444H0Z M0 6.667H30V8.889H0Z M0 11.111H30V13.333H0Z M0 15.556H30V17.778H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M0 0H11.111V11.111H0Z", "Fill": "#0D5EAF" },
+        { "Path": "M4.444 0H6.666V11.111H4.444Z M0 4.444H11.111V6.666H0Z", "Fill": "#FFFFFF" }
+      ]
+    },
+    {
+      "Key": "BG",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#00966E" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#D62612" }
+      ]
+    },
+    {
+      "Key": "GE",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M13 0H17V20H13Z M0 8H30V12H0Z M5.7 1.8L7.3 1.8L6.9 3.6L8.7 3.2L8.7 4.8L6.9 4.4L7.3 6.2L5.7 6.2L6.1 4.4L4.3 4.8L4.3 3.2L6.1 3.6Z M22.7 1.8L24.3 1.8L23.9 3.6L25.7 3.2L25.7 4.8L23.9 4.4L24.3 6.2L22.7 6.2L23.1 4.4L21.3 4.8L21.3 3.2L23.1 3.6Z M5.7 13.8L7.3 13.8L6.9 15.6L8.7 15.2L8.7 16.8L6.9 16.4L7.3 18.2L5.7 18.2L6.1 16.4L4.3 16.8L4.3 15.2L6.1 15.6Z M22.7 13.8L24.3 13.8L23.9 15.6L25.7 15.2L25.7 16.8L23.9 16.4L24.3 18.2L22.7 18.2L23.1 16.4L21.3 16.8L21.3 15.2L23.1 15.6Z", "Fill": "#FF0000" }
+      ]
+    },
+    {
+      "Key": "AM",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#D90012" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#0033A0" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#F2A800" }
+      ]
+    },
+    {
+      "Key": "AZ",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#00B5E2" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#EF3340" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#509E2F" },
+        { "Path": "M12 10a2.3 2.3 0 1 0 4.6 0a2.3 2.3 0 1 0-4.6 0z", "Fill": "#FFFFFF" },
+        { "Path": "M12.95 10a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0z", "Fill": "#EF3340" },
+        { "Path": "M16.3 8.85L16.537 9.427L17.113 9.187L16.873 9.763L17.45 10L16.873 10.237L17.113 10.813L16.537 10.573L16.3 11.15L16.063 10.573L15.487 10.813L15.727 10.237L15.15 10L15.727 9.763L15.487 9.187L16.063 9.427Z", "Fill": "#FFFFFF" }
+      ]
+    },
+    {
+      "Key": "IR",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#239F40" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#DA0000" },
+        { "Path": "M0.6 5.75H2.1V6.25H0.6Z M3.327 5.75H4.827V6.25H3.327Z M6.055 5.75H7.555V6.25H6.055Z M8.782 5.75H10.282V6.25H8.782Z M11.509 5.75H13.009V6.25H11.509Z M14.236 5.75H15.736V6.25H14.236Z M16.964 5.75H18.464V6.25H16.964Z M19.691 5.75H21.191V6.25H19.691Z M22.418 5.75H23.918V6.25H22.418Z M25.145 5.75H26.645V6.25H25.145Z M27.873 5.75H29.373V6.25H27.873Z", "Fill": "#FFFFFF" },
+        { "Path": "M0.6 14.417H2.1V14.917H0.6Z M3.327 14.417H4.827V14.917H3.327Z M6.055 14.417H7.555V14.917H6.055Z M8.782 14.417H10.282V14.917H8.782Z M11.509 14.417H13.009V14.917H11.509Z M14.236 14.417H15.736V14.917H14.236Z M16.964 14.417H18.464V14.917H16.964Z M19.691 14.417H21.191V14.917H19.691Z M22.418 14.417H23.918V14.917H22.418Z M25.145 14.417H26.645V14.917H25.145Z M27.873 14.417H29.373V14.917H27.873Z", "Fill": "#FFFFFF" },
+        { "Path": "M14.72 7.5H15.28V12.5H14.72Z M14.3 8C12.9 8.8 12.9 11.2 14.3 12C13.6 11 13.6 9 14.3 8Z M15.7 8C17.1 8.8 17.1 11.2 15.7 12C16.4 11 16.4 9 15.7 8Z M13.4 7.6C11.3 8.8 11.3 11.2 13.4 12.4C12.3 11.2 12.3 8.8 13.4 7.6Z M16.6 7.6C18.7 8.8 18.7 11.2 16.6 12.4C17.7 11.2 17.7 8.8 16.6 7.6Z", "Fill": "#DA0000" }
+      ]
+    },
+    {
+      "Key": "IQ",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#CE1126" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#000000" },
+        { "Path": "M9.6 11.6H14.6V12.1H9.6Z M9.6 10H10.1V11.6H9.6Z M11.1 8.1H11.6V11.6H11.1Z M12.6 9.4H13.1V11.6H12.6Z M14.1 8.1H14.6V11.6H14.1Z M15.6 11.6H20.4V12.1H15.6Z M15.6 8.1H16.1V11.6H15.6Z M16.9 8.1H17.4V11.6H16.9Z M18.2 8.1H18.7V11.6H18.2Z M19.9 9.4H20.4V11.6H19.9Z", "Fill": "#007A3D" }
+      ]
+    },
+    {
+      "Key": "SY",
+      "Width": 30,
+      "Height": 20,
+      "Layers": [
+        { "Path": "M0 0H30V20H0Z", "Fill": "#007A3D" },
+        { "Path": "M0 6.667H30V20H0Z", "Fill": "#FFFFFF" },
+        { "Path": "M0 13.333H30V20H0Z", "Fill": "#000000" },
+        { "Path": "M9.5 8.3L9.882 9.474L11.117 9.475L10.118 10.201L10.499 11.375L9.5 10.65L8.501 11.375L8.882 10.201L7.883 9.475L9.118 9.474Z M15 8.3L15.382 9.474L16.617 9.475L15.618 10.201L15.999 11.375L15 10.65L14.001 11.375L14.382 10.201L13.383 9.475L14.618 9.474Z M20.5 8.3L20.882 9.474L22.117 9.475L21.118 10.201L21.499 11.375L20.5 10.65L19.501 11.375L19.882 10.201L18.883 9.475L20.118 9.474Z", "Fill": "#CE1126" }
+      ]
+    }
+  ]
+}
