@@ -495,12 +495,20 @@
     margin-right: 3px;
 }
 
-/* Şehir panelindeki ülke bayrağı: dokununca ülke paneli açılır. */
+/* Şehir panelindeki ülke bayrağı: dokununca ülke paneli açılır. Dokunma alanı görünen düğmeden büyüktür. */
+.gw-flag-hit {
+    width: 57px;
+    height: 48px;
+    flex-shrink: 0;
+    margin: -8px 2px -8px -6px;
+    align-items: center;
+    justify-content: center;
+}
+
 .gw-flag-button {
     width: 45px;
     height: 32px;
     flex-shrink: 0;
-    margin-right: 8px;
     padding: 3px;
     border-width: 1px;
     border-color: #0A0906;

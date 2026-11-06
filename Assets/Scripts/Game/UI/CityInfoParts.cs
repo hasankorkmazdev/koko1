@@ -9,8 +9,6 @@ namespace GeoWar.Game
     public sealed class CityInfoParts
     {
         private const float DepositIconStroke = 2f;
-        private const float FlagHitOutsetX = 6f;
-        private const float FlagHitOutsetY = 8f;
 
         private readonly GameSession _session;
         private readonly List<int> _depositBuildings = new List<int>();
@@ -26,9 +24,15 @@ namespace GeoWar.Game
 
         public void AddFlagButton(VisualElement parent, Action openCountry)
         {
-            MetalPanel button = UiBuilder.MetalButton().WithHitOutset(FlagHitOutsetX, FlagHitOutsetY).WithClick(openCountry);
+            // Dokunma alanı görünen düğmeden büyük, gerçek bir kutudur; eksi boşlukları düzeni etkilemez.
+            MetalPanel hitArea = new MetalPanel().WithGradient(UiColors.Clear, UiColors.Clear).WithClick(openCountry);
+            hitArea.AddToClassList("gw-flag-hit");
+            parent.Add(hitArea);
+
+            MetalPanel button = UiBuilder.MetalButton();
+            button.pickingMode = PickingMode.Ignore;
             button.AddToClassList("gw-flag-button");
-            parent.Add(button);
+            hitArea.Add(button);
 
             _flag = new FlagElement(null);
             _flag.AddToClassList("gw-flag-fill");
