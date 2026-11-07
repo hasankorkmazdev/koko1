@@ -3,30 +3,43 @@ using System;
 namespace GeoWar.Simulation
 {
     // Oyun durumu düz dizilerde tutulur; ülke, şehir ve tesisler indeksle okunur.
-    // Bir ülkenin şehirleri, bir şehrin slotları dizide art arda durur.
+    // Bir şehrin slotları dizide art arda durur. Bir ülkenin şehir ve slotları listelerden okunur: şehir el değiştirebilir.
     // Tesis dizileri slot başınadır: boş slotun tesisi yoktur, kurulan tesis slotun yerine yazılır, hiçbir şey kaymaz.
     public sealed class WorldState
     {
         public const byte AlarmNone = 0;
         public const byte AlarmActive = 1;
+        public const byte AlarmStopped = 2;
         public const int NoBuilding = -1;
         public const int NoRecipe = -1;
+        public const int NoCountry = -1;
+        public const int NoCity = -1;
 
         private const int MinShipmentCapacity = 64;
         private const int ShipmentsPerStock = 4;
         private const ulong FnvOffset = 14695981039346656037UL;
         private const ulong FnvPrime = 1099511628211UL;
 
+        // Ülke dizilerinin boyutu: oyuna başlayan ülkeler ve sonda duran boş isyancı devlet yerleri.
         public readonly int CountryCount;
+        public readonly int BaseCountryCount;
         public readonly int CityCount;
         public readonly int FacilityCount;
         public readonly int ResourceCount;
 
         public int Day;
 
-        // Ülkeler
+        // Ülkelerin şehirleri: CountryCities[CountryCityStart[ülke] .. CountryCityStart[ülke + 1]]. Slotlar da aynı biçimde.
+        // Oyun başında listeler sıralıdır; şehir el değiştirince yeniden kurulur.
         public readonly int[] CountryCityStart;
         public readonly int[] CountryFacilityStart;
+        public readonly int[] CountryCities;
+        public readonly int[] CountrySlots;
+
+        // Şehir el değiştirince artar; görünüm haritayı buna bakarak yeniler.
+        public int OwnersVersion;
+
+        // Ülkeler
         public readonly long[] Money;
         public readonly long[] Stock;
         public readonly long[] DailyProduced;
@@ -69,14 +82,42 @@ namespace GeoWar.Simulation
         public readonly int[] BestRecipe;
         public readonly ulong[] RandomState;
 
+        // İsyana kendisi cevap veren ülke: oyuncu. AI ülkeleri hemen cevap verir.
+        public readonly bool[] CountryPlayerControlled;
+
+        // İsyancı devletin çıktığı ülke, ülkeden çıkan isyancı devlet ve isyancı devletin ilk şehri. Yoksa NoCountry, NoCity.
+        public readonly int[] RebelParent;
+        public readonly int[] RebelStateOf;
+        public readonly int[] RebelCapital;
+
+        // Ülkede süren isyan sayısı, başlayan isyan toplamı, isyanla kaybedilen şehir toplamı ve kaybedilen son şehir.
+        public readonly int[] CountryRebellionCount;
+        public readonly int[] CountryRebellionsStarted;
+        public readonly int[] CountryCitiesLost;
+        public readonly int[] CountryLastLostCity;
+
         // Şehirler
         public readonly long[] Population;
         public readonly int[] Satisfaction;
         public readonly int[] CitySlotStart;
+        public readonly int[] CityOwner;
 
         // Keşfedilmiş kaynaklar: tesis türü indeksine göre bit.
         public readonly long[] CityDeposits;
         public readonly bool[] CityCoastal;
+
+        // Komşu şehirler: CityNeighbors[CityNeighborStart[şehir] .. CityNeighborStart[şehir + 1]]. Harita yoksa boştur.
+        public int[] CityNeighborStart;
+        public int[] CityNeighbors;
+
+        // Sayaçlar gün olarak tutulur: isyanın kalan süresi, taviz süresi, yeniden isyan etmeyeceği süre, el değiştirince üretimsiz süre.
+        public readonly int[] CityRebellionDays;
+        public readonly int[] CityConcessionDays;
+        public readonly int[] CityCalmDays;
+        public readonly int[] CityStopDays;
+
+        // Şehrin isyandaki komşu sayısı; memnuniyet hedefini düşürür.
+        public readonly int[] CityRebelNeighbors;
 
         // Tesisler (slot başına)
         public readonly int[] FacilityCity;
@@ -113,15 +154,35 @@ namespace GeoWar.Simulation
         // Yolda olan toplam miktar: [alıcı * kaynak sayısı + kaynak]. AI hedef stoğuna sayar.
         public readonly long[] InTransitMilli;
 
-        public WorldState(int countryCount, int cityCount, int facilityCount, int resourceCount)
+        public WorldState(int baseCountryCount, int cityCount, int facilityCount, int resourceCount, int rebelStateSlots = 0)
         {
+            int countryCount = baseCountryCount + rebelStateSlots;
             CountryCount = countryCount;
+            BaseCountryCount = baseCountryCount;
             CityCount = cityCount;
             FacilityCount = facilityCount;
             ResourceCount = resourceCount;
 
             CountryCityStart = new int[countryCount + 1];
             CountryFacilityStart = new int[countryCount + 1];
+            CountryCities = new int[cityCount];
+            CountrySlots = new int[facilityCount];
+            CountryPlayerControlled = new bool[countryCount];
+            RebelParent = new int[countryCount];
+            RebelStateOf = new int[countryCount];
+            RebelCapital = new int[countryCount];
+            CountryRebellionCount = new int[countryCount];
+            CountryRebellionsStarted = new int[countryCount];
+            CountryCitiesLost = new int[countryCount];
+            CountryLastLostCity = new int[countryCount];
+            CityOwner = new int[cityCount];
+            CityNeighborStart = new int[cityCount + 1];
+            CityNeighbors = new int[0];
+            CityRebellionDays = new int[cityCount];
+            CityConcessionDays = new int[cityCount];
+            CityCalmDays = new int[cityCount];
+            CityStopDays = new int[cityCount];
+            CityRebelNeighbors = new int[cityCount];
             Money = new long[countryCount];
             Stock = new long[countryCount * resourceCount];
             DailyProduced = new long[countryCount * resourceCount];
@@ -175,6 +236,20 @@ namespace GeoWar.Simulation
             {
                 FacilityBuilding[slot] = NoBuilding;
                 FacilityRecipe[slot] = NoRecipe;
+                CountrySlots[slot] = slot;
+            }
+
+            for (int city = 0; city < cityCount; city++)
+            {
+                CountryCities[city] = city;
+            }
+
+            for (int country = 0; country < countryCount; country++)
+            {
+                RebelParent[country] = NoCountry;
+                RebelStateOf[country] = NoCountry;
+                RebelCapital[country] = NoCity;
+                CountryLastLostCity[country] = NoCity;
             }
 
             // Mesafe verilene kadar sıra ülke sırasıdır.
@@ -212,10 +287,12 @@ namespace GeoWar.Simulation
             hash = Mix(hash, Population);
             hash = Mix(hash, PriceMilli);
             hash = Mix(hash, FacilityExperience);
-            for (int i = 0; i < Satisfaction.Length; i++)
-            {
-                hash = (hash ^ (ulong)Satisfaction[i]) * FnvPrime;
-            }
+            hash = Mix(hash, Satisfaction);
+            hash = Mix(hash, CityOwner);
+            hash = Mix(hash, CityRebellionDays);
+            hash = Mix(hash, CityConcessionDays);
+            hash = Mix(hash, CityCalmDays);
+            hash = Mix(hash, CityStopDays);
 
             for (int slot = 0; slot < FacilityCount; slot++)
             {
@@ -223,6 +300,16 @@ namespace GeoWar.Simulation
                 hash = (hash ^ (ulong)FacilityLevel[slot]) * FnvPrime;
                 hash = (hash ^ (ulong)FacilityBuildDays[slot]) * FnvPrime;
                 hash = (hash ^ (ulong)FacilityUpgradeDays[slot]) * FnvPrime;
+            }
+
+            return hash;
+        }
+
+        private static ulong Mix(ulong hash, int[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                hash = (hash ^ (ulong)values[i]) * FnvPrime;
             }
 
             return hash;

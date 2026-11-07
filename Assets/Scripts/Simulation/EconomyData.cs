@@ -107,5 +107,18 @@ namespace GeoWar.Simulation
         public int AiPlanningIntervalDays;
         public int EventChancePerMillion;
         public int EventSatisfactionHitPermille;
+        public int RebelStateSlots;
+        public int RebellionThresholdPermille;
+        public int RebellionChancePerMillion;
+        public int MaxRebellionsPerCountry;
+        public int RebellionDeadlineDays;
+        public int RebellionCalmDays;
+        public int RebellionNeighborPenaltyPermille;
+        public int ConcessionDays;
+        public int ConcessionProductionPermille;
+        public long AidCostMilliPerMillion;
+        public int AidSatisfactionGainPermille;
+        public int HandoverSatisfactionPermille;
+        public int HandoverStopDays;
     }
 }

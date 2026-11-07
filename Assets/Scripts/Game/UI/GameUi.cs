@@ -34,6 +34,7 @@ namespace GeoWar.Game
         private readonly ResourceDetailView _resourceDetail;
         private readonly StockView _stock;
         private readonly MarketView _market;
+        private readonly RebellionView _rebellions;
         private readonly PanelSettings _panelSettings;
         private readonly VisualElement _frame;
         private readonly VisualElement _safeTopBar;
@@ -42,6 +43,10 @@ namespace GeoWar.Game
         private float _safeBottom;
         private int _screenWidth;
         private int _screenHeight;
+        private int _selectedOwner;
+
+        // İsyan penceresi oyunu durdurur; pencere kapanınca oyun bu hızla devam eder.
+        private int _speedBeforeRebellions;
 
         public GameUi(GameObject host, GameSession session, MapView mapView, MapCameraController cameraController)
         {
@@ -84,6 +89,7 @@ namespace GeoWar.Game
                 FitCountry,
                 () => JumpToNext(session.ProvinceAlarm, true),
                 () => JumpToNext(session.ProvinceReady, false),
+                ToggleRebellions,
                 ToggleResource,
                 ToggleStock,
                 ToggleMarket);
@@ -96,6 +102,7 @@ namespace GeoWar.Game
             _resourceWindow = new ResourceWindowView(frame, session, _resourceDetail, () => _hud.SetOpenCell(NoCell), () => _hud.RebuildBar());
             _stock = new StockView(frame, session, _resourceDetail, () => _hud.SetActiveDock(HudView.NoDock));
             _market = new MarketView(frame, session, _resourceDetail, () => _hud.SetActiveDock(HudView.NoDock), OnStateChanged);
+            _rebellions = new RebellionView(frame, session, OnRebellionsClosed, OnRebellionAnswered);
 
             _safeTopBar = UiBuilder.Box(root, "gw-safe-top");
             _safeBottomBar = UiBuilder.Box(root, "gw-safe-bottom");
@@ -246,6 +253,11 @@ namespace GeoWar.Game
 
         public void OnDayFinished()
         {
+            if (_session.TakeOwnersChange())
+            {
+                OnOwnersChanged();
+            }
+
             _hud.Refresh();
             _provincePanel.Refresh();
             _foreignPanel.Refresh();
@@ -255,7 +267,80 @@ namespace GeoWar.Game
             _resourceDetail.Refresh();
             _stock.Refresh();
             _market.Refresh();
+            _rebellions.Refresh();
             _labels.RefreshAlarms(_camera.Center, _camera.Zoom);
+            ShowRebellionNews();
+        }
+
+        // Yeni isyan çıktıysa veya şehir elden gittiyse oyun durur ve pencere açılır.
+        private void ShowRebellionNews()
+        {
+            bool isNew = _session.TakeNewRebellion();
+            int lostCities = _session.TakeLostCities();
+            if (isNew || lostCities > 0)
+            {
+                OpenRebellions(lostCities);
+            }
+        }
+
+        private void OpenRebellions(int lostCities)
+        {
+            if (!_rebellions.IsOpen)
+            {
+                CloseScreens();
+                _speedBeforeRebellions = _session.Speed;
+                _session.SetSpeed(0);
+                _hud.RefreshSpeed();
+            }
+
+            _rebellions.Open(lostCities);
+        }
+
+        // Otomatik test pencereyi kapatıp haritanın görüntüsünü alır.
+        public void CloseRebellions()
+        {
+            _rebellions.Close();
+        }
+
+        private void ToggleRebellions()
+        {
+            if (_rebellions.IsOpen)
+            {
+                _rebellions.Close();
+            }
+            else
+            {
+                OpenRebellions(0);
+            }
+        }
+
+        private void OnRebellionsClosed()
+        {
+            if (_speedBeforeRebellions > 0 && _session.Speed == 0)
+            {
+                _session.SetSpeed(_speedBeforeRebellions);
+                _hud.RefreshSpeed();
+            }
+
+            _speedBeforeRebellions = 0;
+        }
+
+        private void OnRebellionAnswered()
+        {
+            _hud.Refresh();
+            _provincePanel.Refresh();
+            _labels.RefreshAlarms(_camera.Center, _camera.Zoom);
+        }
+
+        // Şehir el değiştirdi: harita yeniden boyanır; seçili şehir el değiştirdiyse paneli de değişir.
+        private void OnOwnersChanged()
+        {
+            _mapView.RefreshOwners();
+            _labels.RefreshOwners(_camera.Center, _camera.Zoom);
+            if (SelectedProvince != MapHitTest.NotFound && _selectedOwner != _session.ProvinceOwner[SelectedProvince])
+            {
+                Select(SelectedProvince, NoSlot);
+            }
         }
 
         // Alt şeritteki düğme ekranı açar; aynı düğme kapatır, diğeri o ekrana geçer.
@@ -287,6 +372,7 @@ namespace GeoWar.Game
             _resourceWindow.Close();
             _stock.Close();
             _market.Close();
+            _rebellions.Close();
         }
 
         // Aynı kutuya tekrar dokununca pencere kapanır, başka kutuya dokununca o kutuya geçer.
@@ -300,6 +386,7 @@ namespace GeoWar.Game
 
             _stock.Close();
             _market.Close();
+            _rebellions.Close();
             _resourceWindow.Open(cell);
             _hud.SetOpenCell(cell);
         }
@@ -360,6 +447,7 @@ namespace GeoWar.Game
                 return;
             }
 
+            _selectedOwner = _session.ProvinceOwner[province];
             bool isOwn = _session.IsOwnProvince(province);
             if (isOwn)
             {
@@ -393,7 +481,7 @@ namespace GeoWar.Game
                 return;
             }
 
-            _countryPanel.Open(_session.Map.ProvinceCountry[SelectedProvince]);
+            _countryPanel.Open(_session.ProvinceOwner[SelectedProvince]);
             FocusOn(SelectedProvince, CountryPanelHeight);
         }
 

@@ -29,6 +29,10 @@ namespace GeoWar.Game
         public List<CountryViewData> Countries;
         public List<SeaLabelData> SeaLabels;
         public List<FlagData> Flags;
+
+        // İsyancı devletin adı ana ülkenin adıyla kurulur; bayrağı tektir.
+        public string RebelStateTitle;
+        public string RebelFlag;
     }
 
     [Serializable]

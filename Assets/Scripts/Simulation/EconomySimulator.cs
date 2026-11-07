@@ -25,6 +25,7 @@ namespace GeoWar.Simulation
         {
             Shipments.DeliverArrivals(definition, world);
             SettleMarket(definition, world);
+            Rebellions.AdvanceDay(definition, world);
             world.Day++;
         }
 
@@ -55,16 +56,28 @@ namespace GeoWar.Simulation
             long demand = world.CountryPopulation[country] * balance.PopulationEnergyMilliPerMillion / Million;
 
             int end = world.CountryFacilityStart[country + 1];
-            for (int facility = world.CountryFacilityStart[country]; facility < end; facility++)
+            for (int i = world.CountryFacilityStart[country]; i < end; i++)
             {
                 // Boş slot, inşaattaki tesis ve üretimsiz tesis enerji işine karışmaz.
+                int facility = world.CountrySlots[i];
                 int recipe = world.FacilityRecipe[facility];
                 if (recipe == WorldState.NoRecipe || world.FacilityBuildDays[facility] > 0)
                 {
                     continue;
                 }
 
+                // Üretimi duran şehrin tesisi enerji üretmez, fabrikası enerji istemez.
                 RecipeKind kind = definition.Kinds[recipe];
+                if (Rebellions.IsCityStopped(world, world.FacilityCity[facility]))
+                {
+                    if (kind == RecipeKind.Energy)
+                    {
+                        world.FacilityAlarm[facility] = WorldState.AlarmStopped;
+                    }
+
+                    continue;
+                }
+
                 if (kind == RecipeKind.Factory)
                 {
                     demand += balance.FactoryEnergyNeedMilli;
@@ -105,8 +118,9 @@ namespace GeoWar.Simulation
             int energyRatio = world.EnergyRatioPermille[country];
 
             int end = world.CountryFacilityStart[country + 1];
-            for (int facility = world.CountryFacilityStart[country]; facility < end; facility++)
+            for (int i = world.CountryFacilityStart[country]; i < end; i++)
             {
+                int facility = world.CountrySlots[i];
                 world.FacilityOutputSpeedPermille[facility] = 0;
 
                 if (world.FacilityBuilding[facility] == WorldState.NoBuilding || AdvanceTimers(definition, world, facility))
@@ -123,6 +137,12 @@ namespace GeoWar.Simulation
                 RecipeKind kind = definition.Kinds[recipe];
                 if (kind == RecipeKind.Energy)
                 {
+                    continue;
+                }
+
+                if (Rebellions.IsCityStopped(world, world.FacilityCity[facility]))
+                {
+                    world.FacilityAlarm[facility] = WorldState.AlarmStopped;
                     continue;
                 }
 
@@ -207,15 +227,21 @@ namespace GeoWar.Simulation
             }
         }
 
-        // Tesisin seviyeden bağımsız çalışma oranı: memnuniyet ve enerji düşürür.
+        // Tesisin seviyeden bağımsız çalışma oranı: memnuniyet, taviz ve enerji düşürür.
         private static int WorkPermille(BalanceData balance, WorldState world, int facility, RecipeKind kind, int energyRatio)
         {
             long work = Permille;
 
-            int satisfaction = world.Satisfaction[world.FacilityCity[facility]];
+            int city = world.FacilityCity[facility];
+            int satisfaction = world.Satisfaction[city];
             if (satisfaction < balance.LowSatisfactionPermille)
             {
                 work = work * satisfaction / balance.LowSatisfactionPermille;
+            }
+
+            if (world.CityConcessionDays[city] > 0)
+            {
+                work = work * balance.ConcessionProductionPermille / Permille;
             }
 
             // Çıkarma tesisleri enerji kullanmaz.
@@ -359,9 +385,9 @@ namespace GeoWar.Simulation
             int cityEnd = world.CountryCityStart[country + 1];
 
             long population = 0;
-            for (int city = cityStart; city < cityEnd; city++)
+            for (int i = cityStart; i < cityEnd; i++)
             {
-                population += world.Population[city];
+                population += world.Population[world.CountryCities[i]];
             }
 
             world.CountryPopulation[country] = population;
@@ -373,15 +399,22 @@ namespace GeoWar.Simulation
                 + FeedPeople(world, stockBase, definition.Electronics, goodsNeed)) / 3;
 
             int taxPercent = world.TaxPercent[country];
-            int target = balance.BaseSatisfactionPermille
-                - taxPercent * balance.TaxSatisfactionPenaltyPerPercent
+            int taxPenalty = taxPercent * balance.TaxSatisfactionPenaltyPerPercent;
+            int countryTarget = balance.BaseSatisfactionPermille
                 - (Permille - foodRatio) / 2
                 - (Permille - goodsRatio) / 4
                 - (Permille - world.EnergyRatioPermille[country]) / 4;
 
             long income = 0;
-            for (int city = cityStart; city < cityEnd; city++)
+            for (int i = cityStart; i < cityEnd; i++)
             {
+                // Tavizdeki şehir vergi ödemez ve vergiden memnuniyet kaybetmez; isyandaki komşu hedefi düşürür.
+                int city = world.CountryCities[i];
+                bool isConceded = world.CityConcessionDays[city] > 0;
+                int target = countryTarget
+                    - (isConceded ? 0 : taxPenalty)
+                    - world.CityRebelNeighbors[city] * balance.RebellionNeighborPenaltyPermille;
+
                 int satisfaction = world.Satisfaction[city];
                 satisfaction += (target - satisfaction) / balance.SatisfactionStepDivisor;
                 world.Satisfaction[city] = Math.Max(0, Math.Min(Permille, satisfaction));
@@ -389,7 +422,10 @@ namespace GeoWar.Simulation
                 long people = world.Population[city];
                 long growth = foodRatio >= Permille ? balance.GrowthPerMillionPerDay : -balance.StarvationPerMillionPerDay;
                 world.Population[city] = people + people * growth / Million;
-                income += people * taxPercent * balance.TaxIncomePerMillionPerPercent / Million;
+                if (!isConceded)
+                {
+                    income += people * taxPercent * balance.TaxIncomePerMillionPerPercent / Million;
+                }
             }
 
             world.Money[country] += income;
@@ -425,7 +461,7 @@ namespace GeoWar.Simulation
                 return;
             }
 
-            int city = cityStart + DeterministicRandom.Range(ref world.RandomState[country], cityCount);
+            int city = world.CountryCities[cityStart + DeterministicRandom.Range(ref world.RandomState[country], cityCount)];
             world.Satisfaction[city] = Math.Max(0, world.Satisfaction[city] - balance.EventSatisfactionHitPermille);
         }
 

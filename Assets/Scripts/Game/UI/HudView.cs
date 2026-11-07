@@ -36,6 +36,7 @@ namespace GeoWar.Game
         private readonly GameSession _session;
         private readonly Action _jumpToAlarm;
         private readonly Action _jumpToReady;
+        private readonly Action _openRebellions;
         private readonly Action<int> _openResource;
         private readonly Action _openStock;
         private readonly Action _openMarket;
@@ -59,6 +60,7 @@ namespace GeoWar.Game
         private Label _alarmCount;
         private Label _readyCount;
         private Label _offerCount;
+        private Label _rebellionCount;
         private VisualElement _hint;
 
         public HudView(
@@ -69,6 +71,7 @@ namespace GeoWar.Game
             Action fitCountry,
             Action jumpToAlarm,
             Action jumpToReady,
+            Action openRebellions,
             Action<int> openResource,
             Action openStock,
             Action openMarket)
@@ -79,6 +82,7 @@ namespace GeoWar.Game
             _openMarket = openMarket;
             _jumpToAlarm = jumpToAlarm;
             _jumpToReady = jumpToReady;
+            _openRebellions = openRebellions;
             BuildHint(frame);
             BuildLegend(frame);
             BuildAlerts(frame);
@@ -129,6 +133,11 @@ namespace GeoWar.Game
             _alarmCount.text = _session.AlarmProvinceCount.ToString();
             _readyCount.text = _session.ReadyProvinceCount.ToString();
             _offerCount.text = _session.OfferCount.ToString();
+
+            // İsyan düğmesi yalnızca isyan varken görünür.
+            int rebellions = _session.RebellionCities.Count;
+            _rebellionCount.text = rebellions.ToString();
+            _rebellionCount.parent.style.display = rebellions > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void BuildHeader(VisualElement frame)
@@ -342,7 +351,8 @@ namespace GeoWar.Game
             Debug.Log("GeoWarUi speed=" + level);
         }
 
-        private void RefreshSpeed()
+        // Oyun başka yerden durdurulunca da hız düğmeleri güncellenir.
+        public void RefreshSpeed()
         {
             for (int i = 0; i < _speedButtons.Length; i++)
             {
@@ -361,6 +371,7 @@ namespace GeoWar.Game
             _alarmCount = AddAlert(alerts, "warning", UiColors.Alarm, _jumpToAlarm);
             _readyCount = AddAlert(alerts, "upgrade", UiColors.Gold, _jumpToReady);
             _offerCount = AddAlert(alerts, "offices", UiColors.Text, UiBuilder.NoAction);
+            _rebellionCount = AddAlert(alerts, "rebel", UiColors.Warn, _openRebellions);
         }
 
         private Label AddAlert(VisualElement parent, string iconKey, Color tint, Action action)

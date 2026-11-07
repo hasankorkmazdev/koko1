@@ -148,8 +148,6 @@ namespace GeoWar.Game
 
             WorldState world = _session.World;
             _name.text = NumberFormat.Upper(_session.Map.ProvinceNames[city]);
-            _sub.text = _session.Map.ProvinceIds[city];
-            _tax.text = "%" + world.TaxPercent[_session.Player];
 
             _info.Show(city);
             BuildTiles();
@@ -191,10 +189,25 @@ namespace GeoWar.Game
             _satisfaction.style.color = satisfactionColor;
             _satisfactionFill.style.width = Length.Percent(satisfaction);
             _satisfactionFill.style.backgroundColor = satisfactionColor;
+            RefreshUnrest();
 
             _slotCaption.text = "Slot " + FacilityCommands.UsedSlots(world, _city) + "/" + FacilityCommands.SlotCount(world, _city);
             RefreshTiles();
             RefreshDetail();
+        }
+
+        // Şehir kodunun yerinde isyan veya taviz süresi yazar; tavizdeki şehrin vergisi sıfırdır.
+        private void RefreshUnrest()
+        {
+            WorldState world = _session.World;
+            int rebellionDays = world.CityRebellionDays[_city];
+            int concessionDays = world.CityConcessionDays[_city];
+
+            _sub.text = rebellionDays > 0 ? "İsyan · " + rebellionDays + " gün"
+                : concessionDays > 0 ? "Taviz · " + concessionDays + " gün"
+                : _session.Map.ProvinceIds[_city];
+            _sub.style.color = rebellionDays > 0 ? UiColors.Warn : concessionDays > 0 ? UiColors.Gold : DisabledText;
+            _tax.text = "%" + (concessionDays > 0 ? 0 : world.TaxPercent[_session.Player]);
         }
 
         private static Label AddStat(VisualElement parent, string caption, float marginLeft)
@@ -372,7 +385,7 @@ namespace GeoWar.Game
         public void Show(int province)
         {
             _province = province;
-            int country = _session.Map.ProvinceCountry[province];
+            int country = _session.ProvinceOwner[province];
             _name.text = NumberFormat.Upper(_session.Map.ProvinceNames[province]);
             _name.EnableInClassList("gw-tag-long", _name.text.Length > LongNameLength);
             _sub.text = _session.CountryTitle(country) + " · " + CountryPanelView.RelationName(_session.Relations[country]);

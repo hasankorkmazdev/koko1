@@ -20,7 +20,39 @@ namespace GeoWar.Simulation
         }
 
         // Başkentlerin enlem ve boylamından mesafeleri ve her ülkenin en yakından uzağa sırasını yazar.
+        // Oyuna başlayan ülkeler içindir; isyancı devletin yeri kurulana kadar sıranın sonunda bekler.
         public static void SetFromCapitals(WorldState world, double[] lat, double[] lon)
+        {
+            int count = world.CountryCount;
+            for (int buyer = 0; buyer < world.BaseCountryCount; buyer++)
+            {
+                for (int other = 0; other < world.BaseCountryCount; other++)
+                {
+                    world.CountryDistanceKm[buyer * count + other] = buyer == other ? 0 : Km(lat[buyer], lon[buyer], lat[other], lon[other]);
+                }
+            }
+
+            RebuildNearest(world);
+        }
+
+        // İsyancı devlet ana ülkenin yerinde sayılır: başkaları için mesafesi ana ülkeninkiyle aynıdır, ana ülkeye mesafesi sıfırdır.
+        public static void CopyForRebelState(WorldState world, int parent, int rebel)
+        {
+            int count = world.CountryCount;
+            for (int other = 0; other < count; other++)
+            {
+                int km = world.CountryDistanceKm[parent * count + other];
+                world.CountryDistanceKm[rebel * count + other] = km;
+                world.CountryDistanceKm[other * count + rebel] = km;
+            }
+
+            world.CountryDistanceKm[rebel * count + parent] = 0;
+            world.CountryDistanceKm[parent * count + rebel] = 0;
+            world.CountryDistanceKm[rebel * count + rebel] = 0;
+            RebuildNearest(world);
+        }
+
+        private static void RebuildNearest(WorldState world)
         {
             int count = world.CountryCount;
             var keys = new long[count];
@@ -30,11 +62,11 @@ namespace GeoWar.Simulation
             {
                 for (int other = 0; other < count; other++)
                 {
-                    int km = buyer == other ? 0 : Km(lat[buyer], lon[buyer], lat[other], lon[other]);
-                    world.CountryDistanceKm[buyer * count + other] = km;
+                    bool isEmptySlot = other >= world.BaseCountryCount && !Rebellions.IsRebelState(world, other);
+                    long km = isEmptySlot ? int.MaxValue : world.CountryDistanceKm[buyer * count + other];
 
                     // Eşit mesafede ülke sırası belirler: sonuç her cihazda aynı kalır.
-                    keys[other] = (long)km * count + other;
+                    keys[other] = km * count + other;
                     order[other] = other;
                 }
 

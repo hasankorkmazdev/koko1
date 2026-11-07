@@ -29,8 +29,15 @@ namespace GeoWar.Game
         public readonly IconLibrary Icons;
         public readonly int Player;
         public readonly CountryRelation[] Relations;
+
+        // İlin bugünkü sahibi. Haritadaki ülke oyun başındaki sahiptir; isyanla değişebilir.
+        public readonly int[] ProvinceOwner;
         public readonly bool[] ProvinceAlarm;
         public readonly bool[] ProvinceReady;
+        public readonly bool[] ProvinceRebellion;
+
+        // Oyuncunun isyan eden şehirleri, süresi en az kalandan başlayarak.
+        public readonly List<int> RebellionCities = new List<int>();
         public readonly BuildingViewData[] BuildingViews;
         public readonly ResourceViewData[] ResourceViews;
         public readonly ResourceBar Bar;
@@ -40,6 +47,10 @@ namespace GeoWar.Game
         private readonly string[] _countryTitles;
         private readonly string[] _transportNames;
         private long _moneyAtDayStart;
+        private int _seenOwnersVersion;
+        private int _seenRebellions;
+        private int _seenLostCities;
+        private bool _ownersChanged;
 
         public long MoneyChangePerDay { get; private set; }
         public int AlarmProvinceCount { get; private set; }
@@ -67,10 +78,12 @@ namespace GeoWar.Game
             Definition = definition;
             Ui = ui;
             Icons = new IconLibrary(ui);
-            Relations = BuildRelations(map, ui);
+            Relations = BuildRelations(map, ui, definition.Balance.RebelStateSlots);
             Player = Array.IndexOf(map.Countries, ui.PlayerCountry);
+            ProvinceOwner = StartingOwners(map);
             ProvinceAlarm = new bool[map.ProvinceCount];
             ProvinceReady = new bool[map.ProvinceCount];
+            ProvinceRebellion = new bool[map.ProvinceCount];
             BuildingViews = MapBuildingViews(definition, ui);
             ResourceViews = MapResourceViews(definition, ui);
             Bar = new ResourceBar(MapStartBar(definition, ui));
@@ -88,9 +101,10 @@ namespace GeoWar.Game
             });
             MarkCoastalCities();
 
-            // Oyuncu pazarda yalnızca elle alıp satar; AI ülkeleri otomatik devam eder.
+            // Oyuncu pazarda yalnızca elle alıp satar, isyana kendisi cevap verir; AI ülkeleri otomatik devam eder.
             World.CountryManualTrade[Player] = true;
-            _countryTitles = new string[map.Countries.Length];
+            World.CountryPlayerControlled[Player] = true;
+            _countryTitles = new string[World.CountryCount];
             _transportNames = MapTransportNames(definition, ui);
             ApplyCapitals();
             ApplyBordersAndWars();
@@ -122,15 +136,16 @@ namespace GeoWar.Game
             return JsonUtility.FromJson<UiData>(Resources.Load<TextAsset>(UiResource).text);
         }
 
-        public static CountryRelation[] BuildRelations(MapData map, UiData ui)
+        // Sonda isyancı devlet yerleri için de yer ayrılır; devlet kurulunca ilişkisi yazılır.
+        public static CountryRelation[] BuildRelations(MapData map, UiData ui, int rebelStateSlots = 0)
         {
-            var relations = new CountryRelation[map.Countries.Length];
+            var relations = new CountryRelation[map.Countries.Length + rebelStateSlots];
             for (int i = 0; i < relations.Length; i++)
             {
                 relations[i] = CountryRelation.Peace;
                 foreach (CountryViewData country in ui.Countries)
                 {
-                    if (country.Key == map.Countries[i])
+                    if (i < map.Countries.Length && country.Key == map.Countries[i])
                     {
                         relations[i] = ParseRelation(country.Relation);
                     }
@@ -138,6 +153,17 @@ namespace GeoWar.Game
             }
 
             return relations;
+        }
+
+        public static int[] StartingOwners(MapData map)
+        {
+            var owners = new int[map.ProvinceCount];
+            for (int province = 0; province < owners.Length; province++)
+            {
+                owners[province] = map.ProvinceCountry[province];
+            }
+
+            return owners;
         }
 
         // Biten gün sayısını döndürür.
@@ -149,7 +175,7 @@ namespace GeoWar.Game
                 long money = World.Money[Player];
                 MoneyChangePerDay = (money - _moneyAtDayStart) / finishedDays;
                 _moneyAtDayStart = money;
-                RefreshDerived();
+                ApplyWorldChanges();
             }
 
             return finishedDays;
@@ -162,16 +188,22 @@ namespace GeoWar.Game
 
         public bool IsOwnProvince(int province)
         {
-            return Map.ProvinceCountry[province] == Player;
+            return ProvinceOwner[province] == Player;
         }
 
         public CountryViewData CountryView(int province)
         {
-            return CountryViewAt(Map.ProvinceCountry[province]);
+            return CountryViewAt(ProvinceOwner[province]);
         }
 
+        // İsyancı devletin veri dosyasında görünümü yoktur.
         public CountryViewData CountryViewAt(int country)
         {
+            if (country >= Map.Countries.Length)
+            {
+                return null;
+            }
+
             string key = Map.Countries[country];
             foreach (CountryViewData view in Ui.Countries)
             {
@@ -184,9 +216,14 @@ namespace GeoWar.Game
             return null;
         }
 
+        public string CountryKey(int country)
+        {
+            return country < Map.Countries.Length ? Map.Countries[country] : Ui.RebelFlag;
+        }
+
         public FlagData CountryFlag(int country)
         {
-            string key = Map.Countries[country];
+            string key = CountryKey(country);
             foreach (FlagData flag in Ui.Flags)
             {
                 if (flag.Key == key)
@@ -206,6 +243,11 @@ namespace GeoWar.Game
 
         public string CapitalName(int country)
         {
+            if (Rebellions.IsRebelState(World, country))
+            {
+                return Map.ProvinceNames[World.RebelCapital[country]];
+            }
+
             CountryViewData view = CountryViewAt(country);
             int capital = view != null ? Array.IndexOf(Map.ProvinceIds, view.Capital) : -1;
             return capital >= 0 ? Map.ProvinceNames[capital] : "";
@@ -237,16 +279,83 @@ namespace GeoWar.Game
         // Kurulan tesisin slotunu döndürür; kurulamazsa -1.
         public int Build(int city, int building)
         {
-            int slot = FacilityCommands.TryBuild(Definition, World, Player, city, building);
+            int slot = IsOwnProvince(city) ? FacilityCommands.TryBuild(Definition, World, Player, city, building) : -1;
             RefreshDerived();
             return slot;
         }
 
         public bool Upgrade(int slot)
         {
-            bool started = FacilityCommands.TryUpgrade(Definition, World, Player, slot);
+            bool started = IsOwnProvince(World.FacilityCity[slot]) && FacilityCommands.TryUpgrade(Definition, World, Player, slot);
             RefreshDerived();
             return started;
+        }
+
+        // Tek şehre veya tüm isyanlara cevap verir. Cevap verilen şehir sayısını döndürür.
+        public int AnswerRebellion(int city, RebellionResponse response)
+        {
+            int answered = Rebellions.TryAnswer(Definition, World, city, response) ? 1 : 0;
+            RefreshDerived();
+            return answered;
+        }
+
+        public int AnswerAllRebellions(RebellionResponse response)
+        {
+            int answered = Rebellions.TryAnswerAll(Definition, World, Player, response);
+            RefreshDerived();
+            return answered;
+        }
+
+        // Görünüm sorar: şehir el değiştirdiyse haritayı yeniler.
+        public bool TakeOwnersChange()
+        {
+            bool changed = _ownersChanged;
+            _ownersChanged = false;
+            return changed;
+        }
+
+        public bool TakeNewRebellion()
+        {
+            int started = World.CountryRebellionsStarted[Player];
+            bool isNew = started != _seenRebellions;
+            _seenRebellions = started;
+            return isNew;
+        }
+
+        // Son sorudan beri isyanla kaybedilen şehir sayısı.
+        public int TakeLostCities()
+        {
+            int lost = World.CountryCitiesLost[Player];
+            int change = lost - _seenLostCities;
+            _seenLostCities = lost;
+            return change;
+        }
+
+        // Otomatik test bu ekranı açar: oyuncunun ilk şehirlerinde isyan başlatır.
+        public void StartRebellionsForTest(int count)
+        {
+            int start = World.CountryCityStart[Player];
+            for (int i = 0; i < count; i++)
+            {
+                Rebellions.Start(Definition, World, Player, World.CountryCities[start + i]);
+            }
+
+            ApplyWorldChanges();
+        }
+
+        // Otomatik test bu ekranı açar: oyuncunun ilk şehirleri isyancı devlete geçer.
+        public void LoseCitiesForTest(int count)
+        {
+            int start = World.CountryCityStart[Player];
+            for (int i = 0; i < count; i++)
+            {
+                int city = World.CountryCities[start + i];
+                Rebellions.Start(Definition, World, Player, city);
+                World.CityRebellionDays[city] = 1;
+            }
+
+            Rebellions.AdvanceDay(Definition, World);
+            ApplyWorldChanges();
         }
 
         public bool BuyOffer(int seller, int resource, long amountMilli)
@@ -309,9 +418,9 @@ namespace GeoWar.Game
             int start = World.CountryCityStart[Player];
             int end = World.CountryCityStart[Player + 1];
             long total = 0;
-            for (int city = start; city < end; city++)
+            for (int i = start; i < end; i++)
             {
-                total += World.Satisfaction[city];
+                total += World.Satisfaction[World.CountryCities[i]];
             }
 
             return end > start ? (int)(total / (end - start) / PercentDivisor) : 0;
@@ -333,15 +442,54 @@ namespace GeoWar.Game
             return date.Day + " " + Ui.Months[date.Month - 1] + " " + date.Year;
         }
 
+        private void ApplyWorldChanges()
+        {
+            if (_seenOwnersVersion != World.OwnersVersion)
+            {
+                _seenOwnersVersion = World.OwnersVersion;
+                _ownersChanged = true;
+                ApplyOwners();
+            }
+
+            RefreshDerived();
+        }
+
+        // Şehir el değiştirdi: illerin sahibi güncellenir, yeni isyancı devletin adı ve ilişkisi yazılır.
+        private void ApplyOwners()
+        {
+            for (int city = 0; city < World.CityCount; city++)
+            {
+                ProvinceOwner[city] = World.CityOwner[city];
+            }
+
+            for (int country = World.BaseCountryCount; country < World.CountryCount; country++)
+            {
+                int parent = World.RebelParent[country];
+                if (parent != WorldState.NoCountry && _countryTitles[country] == null)
+                {
+                    _countryTitles[country] = string.Format(Ui.RebelStateTitle, _countryTitles[parent]);
+                    Relations[country] = parent == Player ? CountryRelation.War : CountryRelation.Peace;
+                }
+            }
+        }
+
         private void RefreshDerived()
         {
             Array.Clear(ProvinceAlarm, 0, ProvinceAlarm.Length);
             Array.Clear(ProvinceReady, 0, ProvinceReady.Length);
+            Array.Clear(ProvinceRebellion, 0, ProvinceRebellion.Length);
+            Rebellions.CollectCities(World, Player, RebellionCities);
+            foreach (int city in RebellionCities)
+            {
+                ProvinceRebellion[city] = true;
+            }
+
             int alarms = 0;
             int ready = 0;
             int end = World.CountryFacilityStart[Player + 1];
-            for (int slot = World.CountryFacilityStart[Player]; slot < end; slot++)
+            for (int i = World.CountryFacilityStart[Player]; i < end; i++)
             {
+                int slot = World.CountrySlots[i];
                 int city = World.FacilityCity[slot];
                 if (World.FacilityAlarm[slot] == WorldState.AlarmActive && !ProvinceAlarm[city])
                 {
@@ -396,14 +544,15 @@ namespace GeoWar.Game
                 capitalY[country] = (float)lat[country] * MapLayout.LatScale;
             }
 
-            World.AirPathCrossings = MapRoutes.AirPathCrossings(Map, capitalX, capitalY);
+            World.AirPathCrossings = MapRoutes.AirPathCrossings(Map, capitalX, capitalY, World.CountryCount);
         }
 
-        // Kara sınırları haritadan gelir. Örnek dünyanın komşuluğu silinir, oyuncunun savaşları veri dosyasından yazılır.
+        // Şehir komşulukları ve kara sınırları haritadan gelir. Örnek dünyanın komşuluğu silinir, oyuncunun savaşları veri dosyasından yazılır.
         private void ApplyBordersAndWars()
         {
-            bool[] neighbors = MapRoutes.CountryNeighbors(Map);
-            Array.Copy(neighbors, World.CountryLandNeighbor, neighbors.Length);
+            MapRoutes.CityNeighbors(Map, World.CityCount, out int[] start, out int[] neighbors);
+            CityOwnership.SetCityNeighbors(World, start, neighbors);
+            CityOwnership.RebuildLandNeighbors(World);
             for (int country = 0; country < Relations.Length; country++)
             {
                 if (Relations[country] == CountryRelation.War)

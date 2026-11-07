@@ -22,7 +22,11 @@ namespace GeoWar.Game
         private const string TestViewResourceDetail = "resource-detail";
         private const string TestViewStock = "stock";
         private const string TestViewMarket = "market";
+        private const string TestViewRebellion = "rebellion";
+        private const string TestViewRebelState = "rebel-state";
+        private const string TestViewRebelMap = "rebel-map";
         private const int TestResourceCell = 1;
+        private const int TestRebellionCities = 3;
         private const float ForeignTestLon = 44.4f;
         private const float ForeignTestLat = 33.3f;
         private const float TestTapFraction = 0.5f;
@@ -91,7 +95,7 @@ namespace GeoWar.Game
             long sessionLoaded = Stopwatch.GetTimestamp();
 
             _mapView = new GameObject("Map").AddComponent<MapView>();
-            _mapView.Build(_session.Map, _session.Relations);
+            _mapView.Build(_session.Map, _session.Relations, _session.ProvinceOwner);
             long mapBuilt = Stopwatch.GetTimestamp();
 
             _mainCamera = CreateCamera();
@@ -292,6 +296,23 @@ namespace GeoWar.Game
                 else if (_testView == TestViewMarket)
                 {
                     _ui.ToggleMarket();
+                }
+                else if (_testView == TestViewRebellion)
+                {
+                    _session.StartRebellionsForTest(TestRebellionCities);
+                    _ui.OnDayFinished();
+                }
+                else if (_testView == TestViewRebelState)
+                {
+                    _session.LoseCitiesForTest(TestRebellionCities);
+                    _ui.OnDayFinished();
+                }
+                else if (_testView == TestViewRebelMap)
+                {
+                    _session.LoseCitiesForTest(TestRebellionCities);
+                    _ui.OnDayFinished();
+                    _ui.CloseRebellions();
+                    _ui.SelectProvince(MapHitTest.NotFound);
                 }
             }
 

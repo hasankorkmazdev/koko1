@@ -89,6 +89,11 @@ namespace GeoWar.Game
                 return new FacilityStatus { Text = "AR-GE: " + world.FacilityUpgradeDays[slot] + " gün", TextColor = Steel, BarColor = Steel, Accent = BuildingBar };
             }
 
+            if (world.FacilityAlarm[slot] == WorldState.AlarmStopped)
+            {
+                return new FacilityStatus { Text = "Üretim durdu", TextColor = UiColors.Warn, BarColor = UiColors.Warn, Accent = UiColors.Alarm };
+            }
+
             if (world.FacilityAlarm[slot] == WorldState.AlarmActive)
             {
                 return new FacilityStatus { Text = "Alarm: " + MissingInput(slot) + " yok", TextColor = UiColors.Warn, BarColor = UiColors.Warn, Accent = UiColors.Alarm };

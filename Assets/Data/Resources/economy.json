@@ -147,6 +147,19 @@
     "PriceCeilingMultiplier": 5,
     "AiPlanningIntervalDays": 10,
     "EventChancePerMillion": 2000,
-    "EventSatisfactionHitPermille": 100
+    "EventSatisfactionHitPermille": 100,
+    "RebelStateSlots": 4,
+    "RebellionThresholdPermille": 200,
+    "RebellionChancePerMillion": 20000,
+    "MaxRebellionsPerCountry": 3,
+    "RebellionDeadlineDays": 15,
+    "RebellionCalmDays": 30,
+    "RebellionNeighborPenaltyPermille": 50,
+    "ConcessionDays": 30,
+    "ConcessionProductionPermille": 500,
+    "AidCostMilliPerMillion": 2000000,
+    "AidSatisfactionGainPermille": 300,
+    "HandoverSatisfactionPermille": 300,
+    "HandoverStopDays": 5
   }
 }

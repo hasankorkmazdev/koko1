@@ -161,7 +161,7 @@ namespace GeoWar.Game
 
             BuildActions(relation);
             Refresh();
-            Debug.Log("GeoWarUi country=" + _session.Map.Countries[country]);
+            Debug.Log("GeoWarUi country=" + _session.CountryKey(country));
         }
 
         public void Close()

@@ -157,6 +157,20 @@ namespace GeoWar.Map
             return kept;
         }
 
+        // Bütün köşelere bakılır: komşu iller kenar paylaşır, tek nokta ortak kenarın üstüne denk gelip yanıltabilir.
+        public static bool IsInside(double[][] ring, double[][] outer)
+        {
+            foreach (double[] point in ring)
+            {
+                if (!Contains(outer, point[0], point[1]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private static bool Contains(double[][] ring, double x, double y)
         {
             bool inside = false;

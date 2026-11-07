@@ -2,7 +2,7 @@
 
 Android ve iOS için harita tabanlı strateji oyunu. Oyuncu bir ülke seçer ve o ülkeyi yönetir: şehirlere fabrikalar kurar, ekonomiyi büyütür, ordusunu geliştirir.
 
-> Durum: Unity projesi kuruldu ve telefonda çalışıyor. Ekonomi çekirdeği, tesis kurma ve seviye mantığı, bölge haritası, üst bar, il paneli, Tesis Kur, kaynak penceresi, Stok ve Pazar hazır. Enerji ve Diplomasi ekranları, şirketler, olaylar, isyan, diplomasi, AI, ordu ve savaş henüz koda geçmedi.
+> Durum: Unity projesi kuruldu ve telefonda çalışıyor. Ekonomi çekirdeği, tesis kurma ve seviye mantığı, bölge haritası, üst bar, il paneli, Tesis Kur, kaynak penceresi, Stok, Pazar ve isyan hazır. Enerji ve Diplomasi ekranları, şirketler, olaylar, diplomasi, AI, ordu ve savaş henüz koda geçmedi.
 
 ## Oyun Konsepti
 
@@ -64,6 +64,7 @@ GeoWar/
 - Her mantık değişikliğinde ilgili testi ekle/güncelle ve çalıştır.
 - Platforma özel kod (Android/iOS) ayrı tutulur ve `#if UNITY_ANDROID` / `#if UNITY_IOS` ile sınırlandırılır.
 - Gerçek ülke/sınır verisi kullanırken siyasi hassasiyetleri göz önünde bulundur (tartışmalı bölgeler için tek bir kaynak ve açık bir politika belirle).
+- İstenen işin dışında fark ettiğin sorunları o an düzeltme; `docs/ISSUES.md` dosyasına yeni madde olarak yaz: sorun, nerede olduğu, nasıl görüldüğü. Kullanıcı listenin üstünden en sonda geçer, o istemeden maddeleri işleme. Düzelen veya geçersiz kalan maddeyi listeden sil. Dosya düz numaralı listedir, başlık ve bölüm içermez.
 
 ## Komutlar
 

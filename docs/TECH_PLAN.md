@@ -36,7 +36,7 @@
       3. Sevkiyat: karayolu, deniz ve hava çalışır; rota, süre, kapasite ve yoldaki mallar koda geçti. Demiryolu kararla şimdilik yoktur.
       4. Hava rotasının geçtiği ülkeler harita ile oyun başında hesaplanır: ülke sayısının küpü kadar yer tutar, tüm dünya haritasında yöntem değişmelidir.
       5. Tesis Kur'daki "Eksiği al" düğmesi yeni pazar kuralına uymadığı için şimdilik kaldırıldı.
-   4. Şirket teklifi, olay ve isyan pencereleri.
+   4. Şirket teklifi ve olay pencereleri. İsyan penceresi hazır; askeri bastırma düğmesi ordu gelene kadar kapalıdır.
    5. Enerji ve Diplomasi.
    6. Ana menü, ülke seçimi, kayıt ve ayarlar.
 6. Mekaniklerin koda geçiş sırası:
@@ -45,7 +45,11 @@
       2. Tesisler slot dizisinde sabit durur; boş slot bellek ve hesap maliyeti getirmez.
       3. Onay bekleyen varsayımlar: AR-GE sırasında tesis çalışır, en yüksek seviye 5, yükseltme bedeli kurulum bedelinin seviye başına %50'si, devlet şirket tesisini kapatamaz, liman kıyı ister.
    2. Şirketler ve kasaları.
-   3. Olaylar ve isyan.
+   3. Olaylar ve isyan: isyan mantığı ve şehir sahipliği hazır, testli; olaylar henüz yok.
+      1. Şehirler dizide sabit durur, sahibi CityOwner'dan okunur; ülkenin şehir ve slot listeleri yalnızca şehir el değiştirince yeniden kurulur. Fetih de bunu kullanacak.
+      2. İsyancı devletler için dizilerin sonunda boş ülke yerleri ayrılır (economy.json, RebelStateSlots). Yer kalmazsa isyan söner, şehir ülkede kalır.
+      3. Onay bekleyen varsayımlar: isyancı devlete şehrin nüfus payı kadar stok ve şebeke kapasitesi geçer, para geçmez; isyancı devlet ana ülkeyle savaşta başlar ve mesafeleri ana ülkeden kopyalanır; hazine vergilerden dolar.
+      4. Ordu olmadığı için askerlerin geçmesi ve şehri geri alma yoktur. AI yalnızca pazarda alım satım yapar ve isyana cevap verir.
    4. Diplomasi.
    5. AI kararları.
    6. Ordu ve savaş, tasarımı bitince.

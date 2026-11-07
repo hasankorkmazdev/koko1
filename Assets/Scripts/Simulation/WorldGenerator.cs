@@ -60,7 +60,7 @@ namespace GeoWar.Simulation
                 slotCount += slots[city];
             }
 
-            var world = new WorldState(settings.CountryCount, settings.CityCount, slotCount, definition.ResourceCount);
+            var world = new WorldState(settings.CountryCount, settings.CityCount, slotCount, definition.ResourceCount, definition.Balance.RebelStateSlots);
             int[] extraction = BuildingsOf(definition, RecipeKind.Extraction);
             int[] factories = BuildingsOf(definition, RecipeKind.Factory);
             int[] energy = BuildingsOf(definition, RecipeKind.Energy);
@@ -105,6 +105,7 @@ namespace GeoWar.Simulation
                 for (; nextCity < cityEnd; nextCity++)
                 {
                     world.Population[nextCity] = populations[nextCity];
+                    world.CityOwner[nextCity] = country;
                     world.Satisfaction[nextCity] = settings.StartingSatisfactionPermille;
                     world.CitySlotStart[nextCity] = nextSlot;
                     population += populations[nextCity];
@@ -135,8 +136,18 @@ namespace GeoWar.Simulation
                 world.GridCapacityMilli[country] = energyDemand * settings.GridCapacityFactorPercent / Percent;
             }
 
-            world.CountryCityStart[settings.CountryCount] = nextCity;
-            world.CountryFacilityStart[settings.CountryCount] = nextSlot;
+            // Boş isyancı devlet yerlerinin şehri ve parası yoktur; zar dizileri yine de seed'den gelir.
+            for (int country = settings.CountryCount; country <= world.CountryCount; country++)
+            {
+                world.CountryCityStart[country] = nextCity;
+                world.CountryFacilityStart[country] = nextSlot;
+                if (country < world.CountryCount)
+                {
+                    world.RandomState[country] = DeterministicRandom.Next(ref random);
+                    world.EnergyRatioPermille[country] = EconomyDefinition.Permille;
+                }
+            }
+
             CountryDistances.SetFromCapitals(world, capitalLat, capitalLon);
 
             // Örnek komşuluk: ülkeler halka biçiminde bağlıdır. Gerçek haritada oyun bunu harita sınırlarıyla değiştirir.
@@ -145,7 +156,33 @@ namespace GeoWar.Simulation
                 CountryRoutes.SetLandNeighbors(world, country, (country + 1) % settings.CountryCount);
             }
 
+            SetSampleCityNeighbors(world);
             return world;
+        }
+
+        // Örnek komşuluk: şehirler sırayla zincir gibi bağlıdır.
+        private static void SetSampleCityNeighbors(WorldState world)
+        {
+            int cityCount = world.CityCount;
+            var start = new int[cityCount + 1];
+            var neighbors = new int[Math.Max(0, (cityCount - 1) * 2)];
+            int next = 0;
+            for (int city = 0; city < cityCount; city++)
+            {
+                start[city] = next;
+                if (city > 0)
+                {
+                    neighbors[next++] = city - 1;
+                }
+
+                if (city < cityCount - 1)
+                {
+                    neighbors[next++] = city + 1;
+                }
+            }
+
+            start[cityCount] = next;
+            CityOwnership.SetCityNeighbors(world, start, neighbors);
         }
 
         private static void ApplyCityList(WorldGeneratorSettings settings)

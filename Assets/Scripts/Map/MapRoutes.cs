@@ -7,49 +7,71 @@ namespace GeoWar.Map
     public static class MapRoutes
     {
         private const int AirPathSamples = 64;
+        private const int NoVertex = -1;
 
-        // Köşesi ortak olan iki ülke komşudur. Sonuç: [a * ülke sayısı + b].
-        public static bool[] CountryNeighbors(MapData map)
+        // Köşesi ortak olan iki il komşudur. Sonuç şehirler içindir: il ve şehir indeksi aynıdır, ülkesi olmayan il sayılmaz.
+        public static void CityNeighbors(MapData map, int cityCount, out int[] start, out int[] neighbors)
         {
-            int count = map.Countries.Length;
-            var neighbors = new bool[count * count];
-            var owners = new Dictionary<(float, float), int>();
-
-            for (int province = 0; province < map.ProvinceCount; province++)
+            int vertexCount = map.VertexStart[cityCount];
+            var lastVertexAtPoint = new Dictionary<(float, float), int>(vertexCount);
+            var previousAtPoint = new int[vertexCount];
+            var cityOfVertex = new int[vertexCount];
+            var pairs = new List<HashSet<int>>(cityCount);
+            for (int city = 0; city < cityCount; city++)
             {
-                int country = map.ProvinceCountry[province];
-                if (country == MapData.NoCountry)
-                {
-                    continue;
-                }
+                pairs.Add(new HashSet<int>());
+            }
 
-                for (int vertex = map.VertexStart[province]; vertex < map.VertexStart[province + 1]; vertex++)
+            for (int city = 0; city < cityCount; city++)
+            {
+                for (int vertex = map.VertexStart[city]; vertex < map.VertexStart[city + 1]; vertex++)
                 {
                     var key = (map.VertexX[vertex], map.VertexY[vertex]);
-                    if (!owners.TryGetValue(key, out int owner))
+                    if (!lastVertexAtPoint.TryGetValue(key, out int last))
                     {
-                        owners.Add(key, country);
+                        last = NoVertex;
                     }
-                    else if (owner != country)
+
+                    for (int other = last; other != NoVertex; other = previousAtPoint[other])
                     {
-                        neighbors[country * count + owner] = true;
-                        neighbors[owner * count + country] = true;
+                        if (cityOfVertex[other] != city)
+                        {
+                            pairs[city].Add(cityOfVertex[other]);
+                            pairs[cityOfVertex[other]].Add(city);
+                        }
                     }
+
+                    cityOfVertex[vertex] = city;
+                    previousAtPoint[vertex] = last;
+                    lastVertexAtPoint[key] = vertex;
                 }
             }
 
-            return neighbors;
+            start = new int[cityCount + 1];
+            var flat = new List<int>();
+            for (int city = 0; city < cityCount; city++)
+            {
+                start[city] = flat.Count;
+                var sorted = new List<int>(pairs[city]);
+                sorted.Sort();
+                flat.AddRange(sorted);
+            }
+
+            start[cityCount] = flat.Count;
+            neighbors = flat.ToArray();
         }
 
-        // İki başkent arasındaki düz çizginin üstünden geçtiği ülkeler: [(a * ülke sayısı + b) * ülke sayısı + c].
-        public static bool[] AirPathCrossings(MapData map, float[] capitalX, float[] capitalY)
+        // İki başkent arasındaki düz çizginin üstünden geçtiği ülkeler: [(a * dizi ülke sayısı + b) * dizi ülke sayısı + c].
+        // Dizi ülke sayısına isyancı devlet yerleri de dahildir; onların satırları devlet kurulunca dolar.
+        public static bool[] AirPathCrossings(MapData map, float[] capitalX, float[] capitalY, int worldCountryCount)
         {
-            int count = map.Countries.Length;
+            int count = worldCountryCount;
+            int founded = map.Countries.Length;
             var crossings = new bool[count * count * count];
 
-            for (int a = 0; a < count; a++)
+            for (int a = 0; a < founded; a++)
             {
-                for (int b = a + 1; b < count; b++)
+                for (int b = a + 1; b < founded; b++)
                 {
                     for (int sample = 1; sample < AirPathSamples; sample++)
                     {

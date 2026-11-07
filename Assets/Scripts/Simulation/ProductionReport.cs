@@ -28,8 +28,9 @@ namespace GeoWar.Simulation
         {
             rows.Clear();
             int cityEnd = world.CountryCityStart[country + 1];
-            for (int city = world.CountryCityStart[country]; city < cityEnd; city++)
+            for (int i = world.CountryCityStart[country]; i < cityEnd; i++)
             {
+                int city = world.CountryCities[i];
                 var row = new CityProduction { City = city };
                 for (int slot = world.CitySlotStart[city]; slot < world.CitySlotStart[city + 1]; slot++)
                 {
@@ -123,7 +124,7 @@ namespace GeoWar.Simulation
                 return;
             }
 
-            if (world.FacilityAlarm[slot] == WorldState.AlarmActive)
+            if (world.FacilityAlarm[slot] != WorldState.AlarmNone)
             {
                 row.Stopped++;
             }

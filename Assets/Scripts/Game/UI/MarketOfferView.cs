@@ -455,7 +455,7 @@ namespace GeoWar.Game
             long amount = BuyAmountMilli;
             if (_seller != NoSeller && _session.BuyOffer(_seller, _resource, amount))
             {
-                Debug.Log("GeoWarUi market buy=" + _session.Definition.ResourceKeys[_resource] + " seller=" + _session.Map.Countries[_seller] + " amount=" + amount);
+                Debug.Log("GeoWarUi market buy=" + _session.Definition.ResourceKeys[_resource] + " seller=" + _session.CountryKey(_seller) + " amount=" + amount);
                 _traded();
             }
         }

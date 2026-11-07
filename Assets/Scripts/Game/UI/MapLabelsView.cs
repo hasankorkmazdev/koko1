@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using GeoWar.Map;
+using GeoWar.Simulation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -42,7 +43,10 @@ namespace GeoWar.Game
         private readonly VisualElement[] _provinces;
         private readonly Label[] _provinceTexts;
         private readonly bool[] _provinceVisible;
+        private readonly int[] _labelOwners;
         private readonly VisualElement[] _alarmTokens;
+        private readonly VisualElement[] _alarmBoxes;
+        private readonly bool[] _rebelLabeled;
         private readonly List<CountryLabel> _countries = new List<CountryLabel>();
         private readonly List<SeaLabel> _seas = new List<SeaLabel>();
         private readonly List<CapitalToken> _capitals = new List<CapitalToken>();
@@ -59,7 +63,10 @@ namespace GeoWar.Game
             _provinces = new VisualElement[_map.ProvinceCount];
             _provinceTexts = new Label[_map.ProvinceCount];
             _provinceVisible = new bool[_map.ProvinceCount];
+            _labelOwners = (int[])session.ProvinceOwner.Clone();
             _alarmTokens = new VisualElement[_map.ProvinceCount];
+            _alarmBoxes = new VisualElement[_map.ProvinceCount];
+            _rebelLabeled = new bool[session.World.CountryCount];
 
             BuildSeas();
             BuildProvinces();
@@ -138,29 +145,63 @@ namespace GeoWar.Game
                     continue;
                 }
 
-                CountryRelation relation = _session.Relations[index];
-                VisualElement anchor = MakeAnchor();
-                VisualElement row = UiBuilder.Box(anchor, "gw-country-row");
-                row.pickingMode = PickingMode.Ignore;
+                AddCountryLabel(country.Name, MapLayout.ToWorld(country.Lon, country.Lat), _session.Relations[index]);
+            }
+        }
 
-                string iconKey = relation == CountryRelation.Ally ? "shield" : relation == CountryRelation.War ? "swords" : null;
-                if (iconKey != null)
+        private void AddCountryLabel(string name, Vector2 world, CountryRelation relation)
+        {
+            VisualElement anchor = MakeAnchor();
+            VisualElement row = UiBuilder.Box(anchor, "gw-country-row");
+            row.pickingMode = PickingMode.Ignore;
+
+            string iconKey = relation == CountryRelation.Ally ? "shield" : relation == CountryRelation.War ? "swords" : null;
+            if (iconKey != null)
+            {
+                Color tint = relation == CountryRelation.Ally ? UiColors.Hex("#10241A") : Color.white;
+                var icon = new IconElement(_session.Icons.Get(iconKey), tint, CountryIconStroke);
+                icon.AddToClassList("gw-country-icon");
+                row.Add(icon);
+            }
+
+            UiBuilder.Text(row, name, "gw-country-label", "gw-f-oswald-700", LabelClass(relation));
+
+            _countries.Add(new CountryLabel
+            {
+                Anchor = anchor,
+                World = world,
+                IsOwn = relation == CountryRelation.Own
+            });
+        }
+
+        // Şehir el değiştirince il adlarının rengi güncellenir, yeni isyancı devlete ad eklenir.
+        public void RefreshOwners(Vector2 center, float zoom)
+        {
+            for (int province = 0; province < _labelOwners.Length; province++)
+            {
+                int owner = _session.ProvinceOwner[province];
+                if (owner == _labelOwners[province] || _provinceTexts[province] == null)
                 {
-                    Color tint = relation == CountryRelation.Ally ? UiColors.Hex("#10241A") : Color.white;
-                    var icon = new IconElement(_session.Icons.Get(iconKey), tint, CountryIconStroke);
-                    icon.AddToClassList("gw-country-icon");
-                    row.Add(icon);
+                    continue;
                 }
 
-                UiBuilder.Text(row, country.Name, "gw-country-label", "gw-f-oswald-700", LabelClass(relation));
-
-                _countries.Add(new CountryLabel
-                {
-                    Anchor = anchor,
-                    World = MapLayout.ToWorld(country.Lon, country.Lat),
-                    IsOwn = relation == CountryRelation.Own
-                });
+                _provinceTexts[province].RemoveFromClassList(LabelClass(_session.Relations[_labelOwners[province]]));
+                _provinceTexts[province].AddToClassList(LabelClass(_session.Relations[owner]));
+                _labelOwners[province] = owner;
             }
+
+            WorldState world = _session.World;
+            for (int country = world.BaseCountryCount; country < world.CountryCount; country++)
+            {
+                int capital = world.RebelCapital[country];
+                if (capital != WorldState.NoCity && !_rebelLabeled[country])
+                {
+                    _rebelLabeled[country] = true;
+                    AddCountryLabel(NumberFormat.Upper(_session.CountryTitle(country)), new Vector2(_map.CenterX[capital], _map.CenterY[capital]), _session.Relations[country]);
+                }
+            }
+
+            UpdatePositions(center, zoom);
         }
 
         // Her ülkenin başkenti aynı altın yıldızla işaretlenir.
@@ -245,7 +286,7 @@ namespace GeoWar.Game
                 return true;
             }
 
-            bool foreign = _session.Relations[_map.ProvinceCountry[province]] != CountryRelation.Own;
+            bool foreign = _session.Relations[_session.ProvinceOwner[province]] != CountryRelation.Own;
             if (foreign && zoom < ForeignProvinceMinZoom)
             {
                 return false;
@@ -291,25 +332,29 @@ namespace GeoWar.Game
             }
         }
 
-        // Gün bitince çağrılır: alarmı olan illerin işaretini açar, biteninkini kapatır.
+        // Gün bitince çağrılır: alarmı veya isyanı olan illerin işaretini açar, biteninkini kapatır. İsyan kırmızı görünür.
         public void RefreshAlarms(Vector2 center, float zoom)
         {
             bool[] alarms = _session.ProvinceAlarm;
+            bool[] rebellions = _session.ProvinceRebellion;
             for (int province = 0; province < alarms.Length; province++)
             {
+                bool isShown = alarms[province] || rebellions[province];
                 VisualElement token = _alarmTokens[province];
-                if (alarms[province] && token == null)
+                if (isShown && token == null)
                 {
                     token = MakeAnchor();
                     VisualElement box = UiBuilder.Box(token, "gw-token", "gw-token-alarm");
                     box.pickingMode = PickingMode.Ignore;
                     UiBuilder.Text(box, "!", "gw-token-text", "gw-f-oswald-700");
                     _alarmTokens[province] = token;
+                    _alarmBoxes[province] = box;
                 }
 
                 if (token != null)
                 {
-                    token.style.display = alarms[province] ? DisplayStyle.Flex : DisplayStyle.None;
+                    token.style.display = isShown ? DisplayStyle.Flex : DisplayStyle.None;
+                    _alarmBoxes[province].EnableInClassList("gw-token-rebel", rebellions[province]);
                 }
             }
 

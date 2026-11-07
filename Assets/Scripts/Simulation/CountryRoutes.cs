@@ -44,6 +44,34 @@ namespace GeoWar.Simulation
             world.RoutesDirty = true;
         }
 
+        // İsyancı devlet ana ülkenin yerinde sayılır: hava rotaları ana ülkeninkiyle aynıdır.
+        // Ana ülkenin kendi uçuşları kendi toprağından kalkar; bu yüzden isyancı devletin üstünden geçmiş sayılmaz.
+        public static void CopyAirPaths(WorldState world, int parent, int rebel)
+        {
+            if (world.AirPathCrossings == null)
+            {
+                return;
+            }
+
+            bool[] paths = world.AirPathCrossings;
+            int count = world.CountryCount;
+            for (int a = 0; a < count; a++)
+            {
+                for (int b = 0; b < count; b++)
+                {
+                    paths[(a * count + b) * count + rebel] = paths[(a * count + b) * count + parent];
+                    paths[(rebel * count + a) * count + b] = paths[(parent * count + a) * count + b];
+                    paths[(a * count + rebel) * count + b] = paths[(a * count + parent) * count + b];
+                }
+            }
+
+            for (int other = 0; other < count; other++)
+            {
+                paths[(parent * count + other) * count + rebel] = false;
+                paths[(other * count + parent) * count + rebel] = false;
+            }
+        }
+
         public static void Recompute(EconomyDefinition definition, WorldState world)
         {
             world.RoutesDirty = false;
@@ -156,8 +184,9 @@ namespace GeoWar.Simulation
             for (int country = 0; country < world.CountryCount; country++)
             {
                 int end = world.CountryFacilityStart[country + 1];
-                for (int slot = world.CountryFacilityStart[country]; slot < end; slot++)
+                for (int i = world.CountryFacilityStart[country]; i < end; i++)
                 {
+                    int slot = world.CountrySlots[i];
                     int building = world.FacilityBuilding[slot];
                     if (building == WorldState.NoBuilding || !definition.BuildingIsTransport[building] || world.FacilityBuildDays[slot] > 0)
                     {

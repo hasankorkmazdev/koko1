@@ -52,7 +52,7 @@ namespace GeoWar.Game
         // Şehir seçilince bir kez: bayrak ve rezervler gün içinde değişmez.
         public void Show(int city)
         {
-            _flag.SetFlag(_session.CountryFlag(_session.Map.ProvinceCountry[city]));
+            _flag.SetFlag(_session.CountryFlag(_session.ProvinceOwner[city]));
             BuildDeposits(city);
             Refresh(city);
         }
@@ -61,7 +61,7 @@ namespace GeoWar.Game
         public void Refresh(int city)
         {
             WorldState world = _session.World;
-            int country = _session.Map.ProvinceCountry[city];
+            int country = _session.ProvinceOwner[city];
             _brief.text = CityBrief.Text(
                 _session.CountryTitle(country),
                 CountryReport.CityCount(world, country),

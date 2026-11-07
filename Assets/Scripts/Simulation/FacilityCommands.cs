@@ -190,8 +190,9 @@ namespace GeoWar.Simulation
         {
             int upgraded = 0;
             int end = world.CountryFacilityStart[country + 1];
-            for (int slot = world.CountryFacilityStart[country]; slot < end; slot++)
+            for (int i = world.CountryFacilityStart[country]; i < end; i++)
             {
+                int slot = world.CountrySlots[i];
                 if (world.FacilityBuilding[slot] == building && TryUpgrade(definition, world, country, slot))
                 {
                     upgraded++;

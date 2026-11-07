@@ -32,20 +32,24 @@
     1. Her şehrin bir memnuniyet değeri vardır.
     2. Yüksek vergi memnuniyeti düşürür.
     3. Memnuniyet düşükse şehirde üretim yavaşlar.
-    4. Memnuniyet çok düşerse şehirde isyan çıkar.
+    4. Memnuniyeti eşiğin altına düşen şehirde her gün isyan çıkma ihtimali vardır; memnuniyet düştükçe ihtimal artar.
     5. Şehir el değiştirince memnuniyeti düşük başlar.
 11. İsyan:
     1. İsyan çıkınca şehirde üretim durur.
-    2. İsyan komşu şehirleri de etkiler; komşu şehirlerin memnuniyeti düşer.
-    3. Oyuncuya isyanı bitirmek için seçenekler sunulur:
-       1. Taviz: xx gün vergi %0 ve üretim %50 düşük.
+    2. Bir ülkede aynı anda çıkan isyan sayısı sınırlıdır.
+    3. İsyan komşu şehirleri de etkiler; komşu şehirlerin memnuniyeti düşer.
+    4. Oyuncuya isyanı bitirmek için seçenekler sunulur:
+       1. Taviz: Yalnızca isyan eden şehre uygulanır; xx gün vergi %0 ve üretim %50 düşük.
        2. Askeri bastırma: Şehre asker gönderilir; isyan hemen biter ama asker kaybedilir ve memnuniyet daha da düşer.
        3. Yardım paketi: Para ödenir, memnuniyet hemen yükselir.
-    4. Oyuncu belli bir süre içinde seçenek seçmezse şehir elden çıkar ve isyancı bir devlet oluşur.
-    5. Komşu şehirde de isyan başarılı olursa o şehir aynı isyancı devlete katılır.
-    6. İsyancı devleti AI yönetir.
-    7. İsyancı devletin adı isyanın çıktığı ülkeye göre verilir: "<Ülke> İşçi Emekçi Devleti" (ör. Türkiye İşçi Emekçi Devleti).
-    8. İsyancı devlet kurulunca ona geçenler:
+    5. Aynı anda süren isyanlar tek pencerede toplanır; hepsi tek seçimle çözülebilir.
+    6. İsyan çözülünce şehir belli bir süre yeniden isyan etmez.
+    7. AI ülkesi isyana hemen cevap verir: parası yetiyorsa yardım paketi, yetmiyorsa taviz.
+    8. Oyuncu belli bir süre içinde seçenek seçmezse şehir elden çıkar ve isyancı bir devlet oluşur.
+    9. Bir ülkeden en fazla bir isyancı devlet çıkar; o ülkede isyanla kaybedilen her şehir, komşu olmasa da bu devlete katılır.
+    10. İsyancı devleti AI yönetir.
+    11. İsyancı devletin adı isyanın çıktığı ülkeye göre verilir: "<Ülke> İşçi Emekçi Devleti" (ör. Türkiye İşçi Emekçi Devleti).
+    12. İsyancı devlet kurulunca ona geçenler:
        1. Ülkenin kaynaklarının belli bir kısmı
        2. Askerlerin belli bir kısmı
        3. Şehrin nüfusunun tamamı

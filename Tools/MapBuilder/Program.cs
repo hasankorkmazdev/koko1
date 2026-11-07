@@ -216,6 +216,7 @@ namespace GeoWar.Tools
             }
 
             MergeProvinces(provinces);
+            DropPiecesInsideNeighbors(provinces);
             provinces.Sort((a, b) => string.CompareOrdinal(a.Country + a.Id, b.Country + b.Id));
             Province background = BuildBackground(backgroundRings);
             if (background.Rings.Count > 0)
@@ -224,6 +225,46 @@ namespace GeoWar.Tools
             }
 
             return provinces;
+        }
+
+        // Bir ilin aynı ülkedeki başka ilin içinde kalan parçası haritada delik gibi görünür; çevreleyen il orayı zaten kaplar.
+        // Başka ülkenin içindeki toprak parçasına dokunulmaz: ülke sınırı değişmemeli.
+        private static void DropPiecesInsideNeighbors(List<Province> provinces)
+        {
+            foreach (Province province in provinces)
+            {
+                if (province.Rings.Count < 2)
+                {
+                    continue;
+                }
+
+                int dropped = province.Rings.RemoveAll(ring => IsInsideSameCountry(provinces, province, ring));
+                if (dropped > 0)
+                {
+                    Console.WriteLine("Komşusunun içinde kalan parça: " + province.Name + " (" + dropped + ")");
+                }
+            }
+        }
+
+        private static bool IsInsideSameCountry(List<Province> provinces, Province owner, double[][] ring)
+        {
+            foreach (Province other in provinces)
+            {
+                if (other == owner || other.Country != owner.Country)
+                {
+                    continue;
+                }
+
+                foreach (double[][] outer in other.Rings)
+                {
+                    if (RingUnion.IsInside(ring, outer))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         // Arka plan ülkeleri sadeleşmeden önce tek parça olur: küçük iller tek tek kaybolup karada deniz gibi delik bırakmaz.

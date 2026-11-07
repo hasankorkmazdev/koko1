@@ -47,6 +47,10 @@ namespace GeoWar.Tests
             };
             List<double[][]> withHole = RingUnion.Merge(ring);
             check("birleşme: oluşan delik atılır", withHole.Count == 1 && Math.Abs(Area(withHole[0]) - 9) < 1e-9);
+
+            check("içeride: tümü içerideki parça sayılır", RingUnion.IsInside(enclave, left));
+            check("içeride: bitişik komşu sayılmaz", !RingUnion.IsInside(right, left));
+            check("içeride: uzaktaki ada sayılmaz", !RingUnion.IsInside(island, left));
         }
 
         private static void LandBeyondAnEdgeIsNotSea(Action<string, bool> check)
@@ -131,6 +135,7 @@ namespace GeoWar.Tests
             check("harita: arka plan seçilmez", MapHitTest.FindProvince(map, 10f * LonScale, 50f * LatScale) == MapHitTest.NotFound);
             CapitalsBelongToTheirCountries(check, map);
             CountryBordersComeFromTheMap(check, map);
+            CityNeighborsComeFromTheMap(check, map);
             check("harita: kıyı kenarları var", map.CoastLines.Length > 0 && map.CoastLines.Length % 2 == 0);
             check("harita: kıyı il sınırlarından az", map.CoastLines.Length < (map.ProvinceBorderLines.Length + map.CountryBorderLines.Length) * 4);
             SlicesJoinTheirNeighbors(check, map);
@@ -156,6 +161,8 @@ namespace GeoWar.Tests
             check("harita: Mingeçevir Yevlah'ta", NameAt(map, 46.98f, 40.75f) == "Yevlah");
             check("harita: Astara Lenkeran'da", NameAt(map, 48.70f, 38.49f) == "Lenkeran");
             check("harita: Şerur Nahçıvan'da", NameAt(map, 45.02f, 39.59f) == "Nahçıvan");
+            check("harita: Bakü'nün içindeki parça Bakü'dür", NameAt(map, 49.648f, 40.395f) == "Bakü");
+            check("harita: Sumgayıt tek parça", RingCount(map, "Sumgayıt") == 1);
             check("harita: Şeki tek il", Array.FindAll(map.ProvinceNames, name => name == "Şeki").Length == 1);
         }
 
@@ -235,6 +242,12 @@ namespace GeoWar.Tests
             check("kıyı: Batı Makedonya karada", !CoastalCities(map, "GR").Contains("Batı Makedonya"));
         }
 
+        private static int RingCount(MapData map, string name)
+        {
+            int province = Array.IndexOf(map.ProvinceNames, name);
+            return map.ProvinceRingStart[province + 1] - map.ProvinceRingStart[province];
+        }
+
         private static List<string> CoastalCities(MapData map, string countryKey)
         {
             int country = Array.IndexOf(map.Countries, countryKey);
@@ -275,7 +288,7 @@ namespace GeoWar.Tests
 
         private static void CountryBordersComeFromTheMap(Action<string, bool> check, MapData map)
         {
-            bool[] neighbors = MapRoutes.CountryNeighbors(map);
+            bool[] neighbors = CountryNeighborsFromCities(map);
             var expected = new Dictionary<string, string[]>
             {
                 { "TR", new[] { "GR", "BG", "GE", "AM", "AZ", "IR", "IQ", "SY" } },
@@ -305,6 +318,79 @@ namespace GeoWar.Tests
                 bool same = found.Count == pair.Value.Length && Array.TrueForAll(pair.Value, found.Contains);
                 check("sınır: " + pair.Key + " komşuları (" + string.Join(",", found) + ")", same);
             }
+        }
+
+        // Oyun ülke sınırlarını şehir komşuluğundan çıkarır: komşu şehirlerin ülkeleri farklıysa sınır vardır.
+        private static bool[] CountryNeighborsFromCities(MapData map)
+        {
+            int cityCount = CityCount(map);
+            MapRoutes.CityNeighbors(map, cityCount, out int[] start, out int[] cities);
+
+            int count = map.Countries.Length;
+            var neighbors = new bool[count * count];
+            for (int city = 0; city < cityCount; city++)
+            {
+                for (int i = start[city]; i < start[city + 1]; i++)
+                {
+                    int a = map.ProvinceCountry[city];
+                    int b = map.ProvinceCountry[cities[i]];
+                    neighbors[a * count + b] |= a != b;
+                }
+            }
+
+            return neighbors;
+        }
+
+        private static int CityCount(MapData map)
+        {
+            int count = 0;
+            for (int province = 0; province < map.ProvinceCount; province++)
+            {
+                if (map.ProvinceCountry[province] != MapData.NoCountry)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static void CityNeighborsComeFromTheMap(Action<string, bool> check, MapData map)
+        {
+            int cityCount = CityCount(map);
+            MapRoutes.CityNeighbors(map, cityCount, out int[] start, out int[] cities);
+
+            // Karayla bağı olmayan iller yalnızca Yunanistan'ın ada bölgeleridir.
+            string[] islands = { "GRC-2883", "GRC-2988", "GRC-2990", "GRC-3013" };
+            bool citiesComeFirst = true;
+            bool everyCityHasNeighbor = true;
+            bool symmetric = true;
+            bool noSelf = true;
+            for (int city = 0; city < cityCount; city++)
+            {
+                citiesComeFirst &= map.ProvinceCountry[city] != MapData.NoCountry;
+                everyCityHasNeighbor &= start[city + 1] > start[city] || Array.IndexOf(islands, map.ProvinceIds[city]) >= 0;
+                for (int i = start[city]; i < start[city + 1]; i++)
+                {
+                    noSelf &= cities[i] != city;
+                    symmetric &= Array.IndexOf(cities, city, start[cities[i]], start[cities[i] + 1] - start[cities[i]]) >= 0;
+                }
+            }
+
+            check("komşuluk: ülkesi olan iller dizinin başında", citiesComeFirst);
+            check("komşuluk: ada bölgesi olmayan her şehrin komşusu var", everyCityHasNeighbor);
+            check("komşuluk: iki yönlü", symmetric);
+            check("komşuluk: şehir kendine komşu değil", noSelf);
+
+            int ankara = Array.IndexOf(map.ProvinceIds, "TR-06");
+            bool IsAnkaraNeighbor(string id)
+            {
+                return Array.IndexOf(cities, Array.IndexOf(map.ProvinceIds, id), start[ankara], start[ankara + 1] - start[ankara]) >= 0;
+            }
+
+            check("komşuluk: Ankara ile Kırıkkale komşu", IsAnkaraNeighbor("TR-71"));
+            check("komşuluk: Ankara ile Konya komşu", IsAnkaraNeighbor("TR-42"));
+            check("komşuluk: Ankara ile İstanbul komşu değil", !IsAnkaraNeighbor("TR-34"));
         }
 
         // Haritadaki her ülkenin başkenti verilmiş olmalı ve o ülkenin bir ili olmalı.

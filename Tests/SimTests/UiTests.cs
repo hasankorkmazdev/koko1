@@ -172,10 +172,11 @@ namespace GeoWar.Tests
                 EconomySimulator.AdvanceDay(definition, whole);
             }
 
-            var splitClock = new SimulationClock(1f) { Speed = 2 };
-            for (int step = 0; step < 100; step++)
+            // Her gün iki kareye bölünür. Yarım saniye ikilik tabanda tam yazıldığı için bütçe yuvarlanmaz.
+            var splitClock = new SimulationClock(1f) { Speed = 1 };
+            for (int step = 0; step < 40; step++)
             {
-                splitClock.Advance(definition, split, 0.1f);
+                splitClock.Advance(definition, split, 0.5f);
             }
 
             check("saat: dağıtmak sonucu değiştirmez", split.Day == 20 && split.Checksum() == whole.Checksum());
@@ -185,7 +186,7 @@ namespace GeoWar.Tests
         {
             var settings = new WorldGeneratorSettings { CitiesPerCountry = new[] { 3, 81, 5 }, FacilitiesPerCity = 2, Seed = 9 };
             WorldState world = WorldGenerator.Create(definition, settings);
-            check("dünya: şehir listesi ülke sayısını belirler", world.CountryCount == 3 && world.CityCount == 89);
+            check("dünya: şehir listesi ülke sayısını belirler", world.BaseCountryCount == 3 && world.CityCount == 89);
             check("dünya: ülkelerin şehirleri listeye uyar", world.CountryCityStart[1] == 3 && world.CountryCityStart[2] == 84 && world.CountryCityStart[3] == 89);
             check("dünya: slotlar şehirlerle gelir", world.CountryFacilityStart[1] == world.CitySlotStart[3] && world.CountryFacilityStart[3] == world.FacilityCount);
             check("dünya: her şehre iki tesis", world.CountBuiltFacilities() == 178);

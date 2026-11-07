@@ -776,6 +776,68 @@
     font-size: 12px;
 }
 
+/* İsyan */
+.gw-rebel-notice {
+    margin: 4px 0 2px 0;
+    padding: 8px 10px;
+    font-size: 13px;
+    white-space: normal;
+    color: #F6EBC2;
+    background-color: #5A1E16;
+    border-width: 1px;
+    border-color: #2E0F09;
+    flex-shrink: 0;
+}
+
+.gw-rebel-cities,
+.gw-rebel-options {
+    flex-shrink: 0;
+}
+
+.gw-rebel-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 48px;
+    margin-bottom: 3px;
+    padding: 4px 10px;
+    border-width: 1px;
+    border-color: #0A0906;
+    flex-shrink: 0;
+}
+
+.gw-rebel-row-name {
+    font-size: 14px;
+}
+
+.gw-rebel-row-info {
+    margin-top: 1px;
+    font-size: 11px;
+}
+
+.gw-rebel-row-days {
+    margin-left: 8px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.gw-rebel-option {
+    flex-direction: row;
+    align-items: center;
+    min-height: 60px;
+    margin-bottom: 4px;
+    padding: 6px 8px 6px 10px;
+    border-width: 1px;
+    border-color: #5F5C44;
+    flex-shrink: 0;
+}
+
+.gw-rebel-apply {
+    height: 48px;
+    min-width: 78px;
+    margin-left: 8px;
+    font-size: 13px;
+}
+
 /* Tesis Kur */
 .gw-builder {
     position: absolute;
@@ -1421,6 +1483,7 @@
 
 .gw-token-capital { background-color: #CFAB52; }
 .gw-token-alarm { background-color: #D9652F; }
+.gw-token-rebel { background-color: #C9362B; }
 
 .gw-token-icon {
     width: 13px;
