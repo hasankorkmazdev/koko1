@@ -9,6 +9,9 @@ namespace GeoWar.Simulation
 
         // Doluysa ülke ve şehir sayısını bu liste belirler: haritadaki iller şehirlerle bire bir eşleşir.
         public int[] CitiesPerCountry;
+
+        // Doluysa şehirler bu nüfuslarla başlar. Boşsa örnek dünya için aralıktan rastgele seçilir.
+        public long[] CityPopulations;
         public int FacilitiesPerCity = 4;
         public ulong Seed = 1;
         public int ExtractionPercent = 35;
@@ -50,7 +53,9 @@ namespace GeoWar.Simulation
             int slotCount = 0;
             for (int city = 0; city < settings.CityCount; city++)
             {
-                populations[city] = settings.MinPopulation + DeterministicRandom.Range(ref random, settings.MaxPopulation - settings.MinPopulation);
+                populations[city] = settings.CityPopulations != null
+                    ? settings.CityPopulations[city]
+                    : settings.MinPopulation + DeterministicRandom.Range(ref random, settings.MaxPopulation - settings.MinPopulation);
                 slots[city] = Math.Max(FacilityCommands.CitySlots(definition.Balance, populations[city]), settings.FacilitiesPerCity);
                 slotCount += slots[city];
             }

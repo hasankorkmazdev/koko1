@@ -13,6 +13,7 @@ namespace GeoWar.Game
         private const float StrokeTile = 1.8f;
         private const int LowSatisfactionPercent = 50;
         private const float StatGap = 4f;
+        private const string EmptySlotIcon = "plus";
 
         private static readonly Color TileEmptyBorder = UiColors.Hex("#5F5C44");
         private static readonly Color TileSelectedBorder = UiColors.Hex("#F6EBC2");
@@ -36,8 +37,10 @@ namespace GeoWar.Game
         private readonly Label _tax;
         private readonly Label _slotCaption;
         private readonly ScrollView _tiles;
+        private readonly MetalPanel _detailCard;
         private readonly VisualElement _emptyDetail;
         private readonly VisualElement _builtDetail;
+        private readonly IconElement _detailIcon;
         private readonly Label _detailName;
         private readonly Label _detailLevel;
         private readonly Label _detailInfo;
@@ -101,14 +104,25 @@ namespace GeoWar.Game
             _slotCaption = UiBuilder.Text(slots, "", "gw-slots-caption");
             _tiles = UiBuilder.HorizontalScroll(slots, "gw-slot-scroll");
 
-            _emptyDetail = UiBuilder.Passive(_panel, "gw-detail");
+            _detailCard = new MetalPanel().WithGradient(UiColors.Well, UiColors.Well);
+            _detailCard.pickingMode = PickingMode.Ignore;
+            _detailCard.AddToClassList("gw-detail-card");
+            _panel.Add(_detailCard);
+
+            _emptyDetail = UiBuilder.Passive(_detailCard, "gw-detail");
             BuildEmptyDetail(_emptyDetail);
 
-            _builtDetail = UiBuilder.Passive(_panel, "gw-detail");
-            VisualElement detailRow = UiBuilder.Passive(_builtDetail, "gw-detail-row");
+            _builtDetail = UiBuilder.Passive(_detailCard, "gw-detail");
+            VisualElement detailHead = UiBuilder.Passive(_builtDetail, "gw-detail-head");
+            _detailIcon = new IconElement(session.Icons.Get(EmptySlotIcon), UiColors.Text, StrokeTile);
+            _detailIcon.AddToClassList("gw-detail-icon");
+            detailHead.Add(_detailIcon);
+
+            VisualElement detailText = UiBuilder.Passive(detailHead, "gw-detail-text");
+            VisualElement detailRow = UiBuilder.Passive(detailText, "gw-detail-row");
             _detailName = UiBuilder.Text(detailRow, "", "gw-detail-name", "gw-f-oswald-700");
             _detailLevel = UiBuilder.Text(detailRow, "", "gw-detail-level", "gw-f-700");
-            _detailInfo = UiBuilder.Text(_builtDetail, "", "gw-doc");
+            _detailInfo = UiBuilder.Text(detailText, "", "gw-doc");
 
             VisualElement experienceRow = UiBuilder.Passive(_builtDetail, "gw-xp-row");
             UiBuilder.Text(experienceRow, "Deneyim", "gw-xp-caption");
@@ -222,7 +236,7 @@ namespace GeoWar.Game
 
                 int building = world.FacilityBuilding[slot];
                 bool isEmpty = building == WorldState.NoBuilding;
-                string iconKey = isEmpty ? "plus" : _session.BuildingViews[building].Icon;
+                string iconKey = isEmpty ? EmptySlotIcon : _session.BuildingViews[building].Icon;
                 var icon = new IconElement(_session.Icons.Get(iconKey), isEmpty ? TilePlusTint : UiColors.Text, StrokeTile);
                 icon.AddToClassList("gw-tile-icon");
                 tile.Add(icon);
@@ -267,11 +281,14 @@ namespace GeoWar.Game
             _builtDetail.style.display = isEmpty ? DisplayStyle.None : DisplayStyle.Flex;
             if (isEmpty)
             {
+                UiBuilder.SetBorder(_detailCard, TileEmptyBorder);
                 return;
             }
 
             int level = world.FacilityLevel[_selectedSlot];
             FacilityStatus status = _text.Status(_selectedSlot);
+            UiBuilder.SetBorder(_detailCard, status.Accent);
+            _detailIcon.SetPath(_session.Icons.Get(_session.BuildingViews[building].Icon));
             _detailName.text = _session.BuildingViews[building].Name;
             _detailLevel.text = "Seviye " + level;
             _detailInfo.text = _text.Rate(building, world.FacilityRecipe[_selectedSlot], level) + " · " + _text.Owner(_selectedSlot);

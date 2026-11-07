@@ -177,7 +177,7 @@ namespace GeoWar.Game
             pick.AddToClassList("gw-resource-pick");
             root.Add(pick);
 
-            var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), StrokeCard);
+            VisualElement icon = _session.Icons.CreateResourceIcon(view, StrokeCard);
             icon.AddToClassList("gw-resource-card-icon");
             pick.Add(icon);
 
@@ -214,7 +214,7 @@ namespace GeoWar.Game
             _title.text = NumberFormat.Upper(view.Name);
 
             _titleIconHolder.Clear();
-            var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), StrokeTitle);
+            VisualElement icon = _session.Icons.CreateResourceIcon(view, StrokeTitle);
             icon.style.width = Length.Percent(100f);
             icon.style.height = Length.Percent(100f);
             _titleIconHolder.Add(icon);

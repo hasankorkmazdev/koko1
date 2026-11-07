@@ -12,6 +12,11 @@ namespace GeoWar.Game
         public int StartMonth;
         public int StartDay;
         public List<string> Months;
+        public string TreasuryIcon;
+        public string MoneyIcon;
+        public string PopulationIcon;
+        public string SatisfactionHighIcon;
+        public string SatisfactionLowIcon;
         public List<IconData> Icons;
         public List<ResourceGroupData> ResourceGroups;
         public List<TabViewData> Tabs;
@@ -37,6 +42,7 @@ namespace GeoWar.Game
     public sealed class ResourceGroupData
     {
         public string Name;
+        public string IconFolder;
         public List<string> Keys;
     }
 

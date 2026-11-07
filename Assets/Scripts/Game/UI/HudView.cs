@@ -49,6 +49,7 @@ namespace GeoWar.Game
 
         private Label _population;
         private Label _satisfaction;
+        private VisualElement _satisfactionIcon;
         private Label _money;
         private Label _income;
         private Label _energy;
@@ -111,7 +112,9 @@ namespace GeoWar.Game
 
             int satisfaction = _session.PlayerSatisfactionPercent();
             _satisfaction.text = satisfaction.ToString();
-            _satisfaction.style.color = satisfaction < LowSatisfactionPercent ? UiColors.Warn : UiColors.Good;
+            bool isLowSatisfaction = satisfaction < LowSatisfactionPercent;
+            _satisfaction.style.color = isLowSatisfaction ? UiColors.Warn : UiColors.Good;
+            _session.Icons.ShowSatisfaction(_satisfactionIcon, isLowSatisfaction);
 
             _money.text = NumberFormat.Compact(_session.PlayerMoney());
             long income = _session.MoneyChangePerDay / EconomyDefinition.MilliPerUnit;
@@ -144,8 +147,9 @@ namespace GeoWar.Game
 
             VisualElement cells = UiBuilder.Box(top, "gw-header-cells");
             cells.pickingMode = PickingMode.Ignore;
-            _population = AddCell(cells, "Nüfus", 0f);
-            _satisfaction = AddCell(cells, "Memnuniyet", CellGap);
+            _population = AddIconCell(cells, "Nüfus", 0f, _session.Icons.CreatePopulationIcon());
+            _satisfactionIcon = _session.Icons.CreateSatisfactionIcon();
+            _satisfaction = AddIconCell(cells, "Memnuniyet", CellGap, _satisfactionIcon);
             AddMoneyCell(cells);
             _energy = AddCell(cells, "Enerji", CellGap);
             _energy.parent.AddToClassList("gw-cell-narrow");
@@ -176,6 +180,23 @@ namespace GeoWar.Game
             return UiBuilder.Text(cell, "", "gw-cell-value", "gw-f-700");
         }
 
+        private static Label AddIconCell(VisualElement parent, string caption, float marginLeft, VisualElement icon)
+        {
+            VisualElement cell = UiBuilder.Box(parent, "gw-cell");
+            cell.pickingMode = PickingMode.Ignore;
+            cell.style.marginLeft = marginLeft;
+            UiBuilder.Text(cell, caption, "gw-cell-caption");
+            return AddIconValue(cell, icon);
+        }
+
+        private static Label AddIconValue(VisualElement cell, VisualElement icon)
+        {
+            VisualElement valueRow = UiBuilder.Passive(cell, "gw-value-row");
+            icon.AddToClassList("gw-cell-icon");
+            valueRow.Add(icon);
+            return UiBuilder.Text(valueRow, "", "gw-cell-value", "gw-f-700");
+        }
+
         private void AddMoneyCell(VisualElement parent)
         {
             VisualElement cell = UiBuilder.Box(parent, "gw-cell", "gw-cell-wide");
@@ -187,7 +208,7 @@ namespace GeoWar.Game
             UiBuilder.Text(captionRow, "Hazine", "gw-cell-caption");
             _income = UiBuilder.Text(captionRow, "", "gw-cell-income", "gw-f-600");
 
-            _money = UiBuilder.Text(cell, "", "gw-cell-value", "gw-f-700");
+            _money = AddIconValue(cell, _session.Icons.CreateTreasuryIcon());
             _money.style.color = UiColors.Gold;
         }
 
@@ -235,7 +256,7 @@ namespace GeoWar.Game
                 cell.Clear();
 
                 ResourceViewData view = _session.ResourceViews[_session.Bar.Items[i]];
-                var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), StrokeMedium);
+                VisualElement icon = _session.Icons.CreateResourceIcon(view, StrokeMedium);
                 icon.AddToClassList("gw-stock-icon");
                 cell.Add(icon);
 

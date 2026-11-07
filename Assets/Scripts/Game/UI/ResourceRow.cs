@@ -10,6 +10,9 @@ namespace GeoWar.Game
         private const int ValueCount = 3;
         private const int NoResource = -1;
         private const float IconStroke = 2f;
+        private const int MoneyIconIndex = 0;
+
+        public const int NoMoneyColumn = -1;
 
         private static readonly Color RowFill = UiColors.Hex("#14130C");
         private static readonly Color RowFillSelected = UiColors.Hex("#3D3B2A");
@@ -24,7 +27,7 @@ namespace GeoWar.Game
 
         public int Resource { get; private set; } = NoResource;
 
-        public ResourceRow(VisualElement parent, GameSession session, Action<int> picked)
+        public ResourceRow(VisualElement parent, GameSession session, Action<int> picked, int moneyColumn = NoMoneyColumn)
         {
             _session = session;
             _root = new MetalPanel().WithGradient(RowFill, RowFill).WithClick(() => picked(Resource));
@@ -35,8 +38,26 @@ namespace GeoWar.Game
             _name = UiBuilder.Text(_root, "", "gw-table-name", "gw-f-600");
             for (int i = 0; i < ValueCount; i++)
             {
-                _values[i] = UiBuilder.Text(_root, "", "gw-table-value", "gw-f-600");
+                _values[i] = i == moneyColumn
+                    ? AddMoneyValue(_root, session, "gw-f-600")
+                    : UiBuilder.Text(_root, "", "gw-table-value", "gw-f-600");
             }
+        }
+
+        // Para sütunu: ikon yazının solunda durur, sütun diğer değerlerle aynı genişlikte kalır.
+        public static Label AddMoneyValue(VisualElement parent, GameSession session, string fontClass)
+        {
+            VisualElement box = UiBuilder.Passive(parent, "gw-table-money");
+            VisualElement icon = session.Icons.CreateMoneyIcon();
+            icon.AddToClassList("gw-table-money-icon");
+            box.Add(icon);
+            return UiBuilder.Text(box, "", "gw-table-money-value", fontClass);
+        }
+
+        // Fiyat yokken yalnızca çizgi görünür; ikon boşa durmaz.
+        public static void SetMoneyIconVisible(Label value, bool visible)
+        {
+            value.parent[MoneyIconIndex].style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public static VisualElement AddHeader(VisualElement parent, string name, string first, string second, string third)
@@ -60,7 +81,7 @@ namespace GeoWar.Game
             ResourceViewData view = _session.ResourceViews[resource];
             _name.text = view.Name;
             _iconHolder.Clear();
-            var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), IconStroke);
+            VisualElement icon = _session.Icons.CreateResourceIcon(view, IconStroke);
             icon.style.width = Length.Percent(100f);
             icon.style.height = Length.Percent(100f);
             _iconHolder.Add(icon);

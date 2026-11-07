@@ -52,7 +52,8 @@ namespace GeoWar.Game
         private readonly ScrollView _scroll;
         private readonly VisualElement _titleIconHolder;
         private readonly Label _title;
-        private readonly Label _prices;
+        private readonly Label _marketPrice;
+        private readonly Label _basePrice;
         private readonly Label _stock;
         private readonly Label _offersTitle;
         private readonly VisualElement _offerRows;
@@ -100,7 +101,9 @@ namespace GeoWar.Game
             _scroll = UiBuilder.VerticalScroll(_window, "gw-resource-scroll");
             VisualElement content = _scroll.contentContainer;
 
-            _prices = UiBuilder.Text(content, "", "gw-resource-outlook", "gw-f-courier-700");
+            VisualElement prices = UiBuilder.Passive(content, "gw-market-prices");
+            _marketPrice = AddPrice(prices, "Piyasa");
+            _basePrice = AddPrice(prices, "· Taban");
             _stock = UiBuilder.Text(content, "", "gw-info-text");
 
             _offersTitle = UiBuilder.Text(content, "", "gw-resource-group", "gw-f-oswald-600");
@@ -157,6 +160,15 @@ namespace GeoWar.Game
             actions.Add(_buyButton);
         }
 
+        private Label AddPrice(VisualElement parent, string caption)
+        {
+            UiBuilder.Text(parent, caption, "gw-market-price-text", "gw-f-courier-700");
+            VisualElement icon = _session.Icons.CreateMoneyIcon();
+            icon.AddToClassList("gw-market-price-icon");
+            parent.Add(icon);
+            return UiBuilder.Text(parent, "", "gw-market-price-text", "gw-f-courier-700");
+        }
+
         public void Open(int resource)
         {
             _resource = resource;
@@ -170,7 +182,7 @@ namespace GeoWar.Game
             ResourceViewData view = _session.ResourceViews[resource];
             _title.text = NumberFormat.Upper(view.Name);
             _titleIconHolder.Clear();
-            var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), StrokeTitle);
+            VisualElement icon = _session.Icons.CreateResourceIcon(view, StrokeTitle);
             icon.style.width = Length.Percent(100f);
             icon.style.height = Length.Percent(100f);
             _titleIconHolder.Add(icon);
@@ -200,8 +212,8 @@ namespace GeoWar.Game
             }
 
             WorldState world = _session.World;
-            _prices.text = "Piyasa " + NumberFormat.Amount(world.PriceMilli[_resource])
-                + " · Taban " + NumberFormat.Amount(_session.Definition.BasePriceMilli[_resource]);
+            _marketPrice.text = NumberFormat.Amount(world.PriceMilli[_resource]);
+            _basePrice.text = NumberFormat.Amount(_session.Definition.BasePriceMilli[_resource]);
 
             long net = StockReport.NetMilli(world, _session.Player, _resource);
             _stock.text = "Stoğun " + NumberFormat.Amount(_session.PlayerStockMilli(_resource)) + " · Net/gün " + NumberFormat.SignedAmount(net);
@@ -271,7 +283,7 @@ namespace GeoWar.Game
             row.Distance = UiBuilder.Text(text, "", "gw-info-note", "gw-muted");
             row.Amount = UiBuilder.Text(row.Root, "", "gw-table-value", "gw-f-600");
             row.Fee = UiBuilder.Text(row.Root, "", "gw-table-value", "gw-f-600");
-            row.Cost = UiBuilder.Text(row.Root, "", "gw-table-value", "gw-f-700");
+            row.Cost = ResourceRow.AddMoneyValue(row.Root, _session, "gw-f-700");
             return row;
         }
 
@@ -294,6 +306,7 @@ namespace GeoWar.Game
                 row.Distance.style.color = UiColors.Warn;
                 row.Fee.text = NoValue;
                 row.Cost.text = NoValue;
+                ResourceRow.SetMoneyIconVisible(row.Cost, false);
             }
             else
             {
@@ -301,6 +314,7 @@ namespace GeoWar.Game
                 row.Distance.style.color = Muted;
                 row.Fee.text = "+%" + NumberFormat.Milli(MarketCommands.RoadFeePermille(definition, world, buyer, seller) * PermilleToMilliPercent);
                 row.Cost.text = NumberFormat.Amount(MarketCommands.UnitCostMilli(definition, world, buyer, seller, _resource));
+                ResourceRow.SetMoneyIconVisible(row.Cost, true);
             }
 
             bool selected = seller == _seller;

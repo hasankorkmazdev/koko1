@@ -16,6 +16,12 @@ namespace GeoWar.Tools
         private const double FullDetail = 0;
         private const double CountryGrid = 0.02;
         private const double FarGrid = 0.04;
+
+        // Arka plan karasının sadeleşince oynadığı mesafeden uzağa bakılır.
+        private const double CoastProbeGrids = 2;
+
+        // Harita birimi. Ölçümde en kısa gerçek kıyı 6,5 (Astara), sınırdaki en uzun boşluk 0,42 birim.
+        private const double MinCityCoastLength = 1.5;
         private const double MinIslandArea = 0.004;
         private const double MinBackgroundArea = 0.03;
         private const int MinRingPoints = 4;
@@ -23,7 +29,9 @@ namespace GeoWar.Tools
         private const int TurkeyTones = 4;
         private const int NeighborTones = 2;
         private const double RegionMinLon = 15;
-        private const double RegionMaxLon = 60;
+
+        // İran'ın en doğu ucu 63,3. Daha azı, sınır komşularını haritadan düşürür ve sınırı deniz gibi gösterir.
+        private const double RegionMaxLon = 64;
         private const double RegionMinLat = 20;
         private const double RegionMaxLat = 56;
 
@@ -31,7 +39,30 @@ namespace GeoWar.Tools
         private static readonly Dictionary<string, string> NameFixes = new Dictionary<string, string>
         {
             { "Hakkâri", "Hakkari" },
-            { "Elâzığ", "Elazığ" }
+            { "Elâzığ", "Elazığ" },
+            { "Şəki", "Şeki" }
+        };
+
+        // Kaynakta ayrı görünen ama oyunda il olmaması gereken parçalar: anahtardaki il, listedekileri içine alır.
+        // Hedefin kimliği, adı ve merkezi kalır. Yalnızca ülkenin iç bölünmesi değişir, ülke sınırı aynı kalır.
+        // Azerbaycan'ın 73 birimi resmî 14 ekonomik bölgeye iner; hedef, bölgenin bilinen en büyük şehridir.
+        private static readonly Dictionary<string, string[]> ProvinceMerges = new Dictionary<string, string[]>
+        {
+            { "SYR-4843", new[] { "SYR-144" } }, // Şam: Rif Şam
+            { "SYR-146", new[] { "SYR-145", "SYR-5261" } }, // Dera: Kuneytire, UNDOF
+            { "AZE-1717", new[] { "AZE-1690", "AZE-1719" } }, // Abşeron-Hızı -> Sumgayıt
+            { "AZE-1716", new[] { "AZE-1693", "AZE-1705", "AZE-1711" } }, // Dağlık Şirvan -> Şamahı
+            { "AZE-1679", new[] { "AZE-1677", "AZE-1680", "AZE-1681", "AZE-1686", "AZE-5561" } }, // Gence-Daşkesen -> Gence
+            { "AZE-1696", new[] { "AZE-1691", "AZE-1702", "AZE-1722", "AZE-1734", "AZE-1737", "AZE-1738", "AZE-1739", "AZE-4838", "AZE-5565" } }, // Karabağ -> Berde
+            { "AZE-1685", new[] { "AZE-1676", "AZE-1678", "AZE-1684", "AZE-1687" } }, // Gazah-Tovuz -> Şemkir
+            { "AZE-1730", new[] { "AZE-1701", "AZE-1712", "AZE-1728", "AZE-1729" } }, // Guba-Haçmaz -> Haçmaz
+            { "AZE-1688", new[] { "AZE-1683", "AZE-1692", "AZE-1703", "AZE-1706", "AZE-1718", "AZE-1721", "AZE-5566" } }, // Merkezi Aran -> Yevlah
+            { "AZE-1714", new[] { "AZE-1697", "AZE-1704", "AZE-1713" } }, // Mil-Muğan -> Sabirabad
+            { "AZE-5562", new[] { "AZE-1695", "AZE-1700", "AZE-1707", "AZE-1708", "AZE-1709", "AZE-1720" } }, // Lenkeran-Astara -> Lenkeran
+            { "AZE-2422", new[] { "AZE-2415", "AZE-2418", "AZE-2419", "AZE-2420", "AZE-2421", "AZE-2423", "AZE-5567" } }, // Nahçıvan
+            { "AZE-1727", new[] { "AZE-1723", "AZE-1724", "AZE-1725", "AZE-1726", "AZE-1731", "AZE-5564" } }, // Şeki-Zagatala -> Şeki
+            { "AZE-1699", new[] { "AZE-1682", "AZE-1735", "AZE-1736", "AZE-1740" } }, // Doğu Zengezur -> Cebrayıl
+            { "AZE-1715", new[] { "AZE-1694", "AZE-1698", "AZE-1710", "AZE-5563" } } // Şirvan-Salyan -> Salyan
         };
 
         private static readonly string[] NameSuffixes = { " ili", " İli", " Rayonu", " Eyaleti", " İdari Bölgesi", " Özerk Cumhuriyeti" };
@@ -137,7 +168,7 @@ namespace GeoWar.Tools
         {
             var countries = new HashSet<string>(RegionCountries);
             var provinces = new List<Province>();
-            var background = new Province { Id = "", Name = "", Country = "" };
+            var backgroundRings = new Dictionary<string, List<double[][]>>();
 
             using (FileStream stream = File.OpenRead(path))
             using (JsonDocument document = JsonDocument.Parse(stream))
@@ -152,7 +183,7 @@ namespace GeoWar.Tools
 
                     if (!isSelectable)
                     {
-                        AddBackgroundRings(feature.GetProperty("geometry"), background, admin);
+                        AddBackgroundRings(feature.GetProperty("geometry"), backgroundRings, admin);
                         continue;
                     }
 
@@ -184,7 +215,9 @@ namespace GeoWar.Tools
                 }
             }
 
+            MergeProvinces(provinces);
             provinces.Sort((a, b) => string.CompareOrdinal(a.Country + a.Id, b.Country + b.Id));
+            Province background = BuildBackground(backgroundRings);
             if (background.Rings.Count > 0)
             {
                 provinces.Add(background);
@@ -193,19 +226,65 @@ namespace GeoWar.Tools
             return provinces;
         }
 
-        private static void AddBackgroundRings(JsonElement geometry, Province background, string admin)
+        // Arka plan ülkeleri sadeleşmeden önce tek parça olur: küçük iller tek tek kaybolup karada deniz gibi delik bırakmaz.
+        private static Province BuildBackground(Dictionary<string, List<double[][]>> ringsByCountry)
         {
-            foreach (double[][] ring in OuterRings(geometry))
+            var background = new Province { Id = "", Name = "", Country = "" };
+            foreach (List<double[][]> rings in ringsByCountry.Values)
             {
-                if (!TouchesRegion(ring))
+                foreach (double[][] ring in RingUnion.Merge(rings))
+                {
+                    double[][] snapped = Snap(ring, FarGrid);
+                    if (snapped.Length >= MinRingPoints && Math.Abs(Area(snapped)) >= MinBackgroundArea)
+                    {
+                        background.Rings.Add(snapped);
+                    }
+                }
+            }
+
+            return background;
+        }
+
+        private static void MergeProvinces(List<Province> provinces)
+        {
+            var byId = new Dictionary<string, Province>(provinces.Count);
+            foreach (Province province in provinces)
+            {
+                byId[province.Id] = province;
+            }
+
+            foreach (KeyValuePair<string, string[]> merge in ProvinceMerges)
+            {
+                if (!byId.TryGetValue(merge.Key, out Province target))
                 {
                     continue;
                 }
 
-                double[][] snapped = Snap(ring, FarGrid);
-                if (snapped.Length >= MinRingPoints && Math.Abs(Area(snapped)) >= MinBackgroundArea)
+                foreach (string sourceId in merge.Value)
                 {
-                    background.Rings.Add(snapped);
+                    Province source = byId[sourceId];
+                    target.Rings.AddRange(source.Rings);
+                    provinces.Remove(source);
+                }
+
+                target.Rings = RingUnion.Merge(target.Rings);
+                Console.WriteLine("Birleşen il: " + target.Name + " (" + target.Rings.Count + " halka)");
+            }
+        }
+
+        private static void AddBackgroundRings(JsonElement geometry, Dictionary<string, List<double[][]>> ringsByCountry, string admin)
+        {
+            if (!ringsByCountry.TryGetValue(admin, out List<double[][]> rings))
+            {
+                rings = new List<double[][]>();
+                ringsByCountry.Add(admin, rings);
+            }
+
+            foreach (double[][] ring in OuterRings(geometry))
+            {
+                if (TouchesRegion(ring))
+                {
+                    rings.Add(ring);
                 }
             }
         }
@@ -481,6 +560,8 @@ namespace GeoWar.Tools
             var countryLines = new List<int>();
             var seenEdges = new Dictionary<(float, float, float, float), OpenEdge>();
             var coastEdges = new Dictionary<(float, float, float, float), OpenEdge>();
+            var ringIsBackground = new bool[totalRings];
+            var ringProvince = new int[totalRings];
 
             int nextVertex = 0;
             int nextRing = 0;
@@ -505,6 +586,9 @@ namespace GeoWar.Tools
 
                 foreach (double[][] ring in province.Rings)
                 {
+                    int ringIndex = nextRing;
+                    ringIsBackground[ringIndex] = isBackground;
+                    ringProvince[ringIndex] = index;
                     map.RingStart[nextRing++] = nextVertex;
                     int ringStart = nextVertex;
                     var ringX = new double[ring.Length];
@@ -534,7 +618,7 @@ namespace GeoWar.Tools
                         AddEdges(map, ringStart, ring.Length, index, seenEdges, provinceLines, countryLines);
                     }
 
-                    AddCoastEdges(map, ringStart, ring.Length, coastEdges);
+                    AddCoastEdges(map, ringStart, ring.Length, ringIndex, coastEdges);
                 }
 
                 map.MinX[index] = minX;
@@ -560,27 +644,53 @@ namespace GeoWar.Tools
                 }
             }
 
-            var coastLines = new List<int>();
+            map.ProvinceBorderLines = provinceLines.ToArray();
+            map.CountryBorderLines = countryLines.ToArray();
+            map.CoastLines = BuildCoastLines(map, coastEdges, ringIsBackground, ringProvince);
+            return map;
+        }
+
+        // Karayla sınır olan kenarlar elenir. Bir ilde birkaç kilometrelik kıyı kalıyorsa o da sınırdaki boşluktur, deniz değil.
+        private static int[] BuildCoastLines(
+            MapData map,
+            Dictionary<(float, float, float, float), OpenEdge> coastEdges,
+            bool[] ringIsBackground,
+            int[] ringProvince)
+        {
+            var landProbe = new LandProbe(map.VertexX, map.VertexY, map.RingStart, ringIsBackground);
+            float probeDistance = (float)(CoastProbeGrids * FarGrid * LatScale);
+            var candidates = new List<OpenEdge>();
+            var coastLengths = new double[map.ProvinceCount];
             foreach (OpenEdge edge in coastEdges.Values)
             {
-                if (!edge.Matched)
+                if (!edge.Matched && !landProbe.HasLandBeyond(edge.A, edge.B, edge.Ring, probeDistance))
+                {
+                    candidates.Add(edge);
+                    double dx = map.VertexX[edge.B] - map.VertexX[edge.A];
+                    double dy = map.VertexY[edge.B] - map.VertexY[edge.A];
+                    coastLengths[ringProvince[edge.Ring]] += Math.Sqrt(dx * dx + dy * dy);
+                }
+            }
+
+            var coastLines = new List<int>(candidates.Count * 2);
+            foreach (OpenEdge edge in candidates)
+            {
+                if (ringIsBackground[edge.Ring] || coastLengths[ringProvince[edge.Ring]] >= MinCityCoastLength)
                 {
                     coastLines.Add(edge.A);
                     coastLines.Add(edge.B);
                 }
             }
 
-            map.ProvinceBorderLines = provinceLines.ToArray();
-            map.CountryBorderLines = countryLines.ToArray();
-            map.CoastLines = coastLines.ToArray();
-            return map;
+            return coastLines.ToArray();
         }
 
-        // Tek halkaya ait kenar kıyıdır; iki halkanın paylaştığı kenar karanın içinde kalır.
+        // Tek halkaya ait kenar kıyı adayıdır; iki halkanın paylaştığı kenar karanın içinde kalır.
         private static void AddCoastEdges(
             MapData map,
             int start,
             int count,
+            int ring,
             Dictionary<(float, float, float, float), OpenEdge> coastEdges)
         {
             for (int i = 0; i < count; i++)
@@ -594,7 +704,7 @@ namespace GeoWar.Tools
                 }
                 else
                 {
-                    coastEdges.Add(key, new OpenEdge { A = a, B = b });
+                    coastEdges.Add(key, new OpenEdge { A = a, B = b, Ring = ring });
                 }
             }
         }
@@ -604,6 +714,7 @@ namespace GeoWar.Tools
             public int A;
             public int B;
             public byte Country;
+            public int Ring;
             public bool Matched;
         }
 

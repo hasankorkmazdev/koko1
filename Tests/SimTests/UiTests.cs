@@ -11,6 +11,7 @@ namespace GeoWar.Tests
     public static class UiTests
     {
         private const string UiFile = "Assets/Data/Resources/ui.json";
+        private const string ArtResourcesRoot = "Assets/Art/Resources";
         private const float Tolerance = 0.01f;
         private const int HexColorLength = 7;
 
@@ -123,6 +124,14 @@ namespace GeoWar.Tests
             check("arayüz: her kaynak bir gruptadır", resources.All(grouped.Contains));
             check("arayüz: kaynak iki grupta olmaz", grouped.Count == grouped.Distinct().Count());
             check("arayüz: grupta bilinmeyen kaynak yok", grouped.All(resources.Contains));
+            check("arayüz: her grubun ikon klasörü var", data.ResourceGroups.All(group =>
+                !string.IsNullOrEmpty(group.IconFolder) && Directory.Exists(Path.Combine(ArtResourcesRoot, group.IconFolder))));
+            check("arayüz: ikon görseli kendi grubunun kaynağıdır", data.ResourceGroups.All(group =>
+                Directory.GetFiles(Path.Combine(ArtResourcesRoot, group.IconFolder), "*.png")
+                    .All(file => group.Keys.Contains(Path.GetFileNameWithoutExtension(file)))));
+            string[] statIcons = { data.TreasuryIcon, data.MoneyIcon, data.PopulationIcon, data.SatisfactionHighIcon, data.SatisfactionLowIcon };
+            check("arayüz: üst bar ve para görselleri var", statIcons.All(path =>
+                !string.IsNullOrEmpty(path) && File.Exists(Path.Combine(ArtResourcesRoot, path + ".png"))));
             check("arayüz: on iki ay", data.Months.Count == 12);
             check("arayüz: oyuncunun bayrağı var", data.Flags.Any(flag => flag.Key == data.PlayerCountry));
             check("arayüz: her ülkenin bayrağı var", data.Countries.All(country => data.Flags.Any(flag => flag.Key == country.Key)));

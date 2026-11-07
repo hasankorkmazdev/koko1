@@ -8,12 +8,13 @@ using UnityEngine;
 namespace GeoWar.Game
 {
     // Oyunun durumu: harita, ekonomi ve oyuncunun ülkesi. Arayüz durumu buradan okur, değişikliği buradan ister.
-    // Haritadaki her il bir şehirdir: il ve şehir indeksi aynıdır. Dünya şimdilik örnek veriyle üretilir.
+    // Haritadaki her il bir şehirdir: il ve şehir indeksi aynıdır. Şehir nüfusları gerçek veriden gelir; tesisler ve rezervler şimdilik örnek veriyle üretilir.
     public sealed class GameSession
     {
         private const string MapResource = "map_region";
         private const string EconomyResource = "economy";
         private const string UiResource = "ui";
+        private const string PopulationResource = "population";
         private const int PercentDivisor = 10;
         private const int WorldSeed = 1;
         private const int SampleFacilitiesPerCity = 2;
@@ -60,7 +61,7 @@ namespace GeoWar.Game
             get { return _clock.DayProgress(World); }
         }
 
-        private GameSession(MapData map, EconomyDefinition definition, UiData ui)
+        private GameSession(MapData map, EconomyDefinition definition, UiData ui, PopulationData population)
         {
             Map = map;
             Definition = definition;
@@ -74,9 +75,11 @@ namespace GeoWar.Game
             ResourceViews = MapResourceViews(definition, ui);
             Bar = new ResourceBar(MapStartBar(definition, ui));
 
+            int[] citiesPerCountry = CountCities(map);
             World = WorldGenerator.Create(definition, new WorldGeneratorSettings
             {
-                CitiesPerCountry = CountCities(map),
+                CitiesPerCountry = citiesPerCountry,
+                CityPopulations = PopulationTable.ForCities(population, map.ProvinceIds, Sum(citiesPerCountry)),
                 Seed = WorldSeed,
                 FacilitiesPerCity = SampleFacilitiesPerCity,
                 MaxStartingLevel = SampleMaxStartingLevel,
@@ -102,7 +105,8 @@ namespace GeoWar.Game
         {
             MapData map = LoadMap();
             var definition = EconomyDefinition.Build(JsonUtility.FromJson<EconomyData>(Resources.Load<TextAsset>(EconomyResource).text));
-            return new GameSession(map, definition, LoadUi());
+            var population = JsonUtility.FromJson<PopulationData>(Resources.Load<TextAsset>(PopulationResource).text);
+            return new GameSession(map, definition, LoadUi(), population);
         }
 
         public static MapData LoadMap()
@@ -492,6 +496,17 @@ namespace GeoWar.Game
             }
 
             return cities;
+        }
+
+        private static int Sum(int[] values)
+        {
+            int total = 0;
+            foreach (int value in values)
+            {
+                total += value;
+            }
+
+            return total;
         }
 
         private static CountryRelation ParseRelation(string relation)

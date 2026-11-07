@@ -94,7 +94,7 @@ namespace GeoWar.Game
             ResourceViewData view = _session.ResourceViews[resource];
             _title.text = NumberFormat.Upper(view.Name);
             _titleIconHolder.Clear();
-            var icon = new IconElement(_session.Icons.Get(view.Icon), UiColors.Hex(view.Tint), StrokeTitle);
+            VisualElement icon = _session.Icons.CreateResourceIcon(view, StrokeTitle);
             icon.style.width = Length.Percent(100f);
             icon.style.height = Length.Percent(100f);
             _titleIconHolder.Add(icon);

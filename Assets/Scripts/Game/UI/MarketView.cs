@@ -43,7 +43,7 @@ namespace GeoWar.Game
                 UiBuilder.Text(scroll.contentContainer, group.Name, "gw-resource-group", "gw-f-oswald-600");
                 foreach (string key in group.Keys)
                 {
-                    var row = new ResourceRow(scroll.contentContainer, session, _offers.Open);
+                    var row = new ResourceRow(scroll.contentContainer, session, _offers.Open, ColumnPrice);
                     row.SetResource(session.Definition.ResourceIndex(key));
                     _rows.Add(row);
                 }

@@ -4,6 +4,11 @@
   "StartMonth": 5,
   "StartDay": 4,
   "Months": ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+  "TreasuryIcon": "Icons/Economy/treasury",
+  "MoneyIcon": "Icons/Economy/money",
+  "PopulationIcon": "Icons/Economy/population",
+  "SatisfactionHighIcon": "Icons/Economy/smile",
+  "SatisfactionLowIcon": "Icons/Economy/cry",
   "Icons": [
     { "Key": "wheat", "Path": "M12 21V8 M12 8c-2-1-3-3-3-5c2 0 3 1.500 3 3 M12 8c2-1 3-3 3-5c-2 0-3 1.500-3 3 M12 13c-2-1-4-2-5-4c2 0 4 1 5 3 M12 13c2-1 4-2 5-4c-2 0-4 1-5 3 M12 18c-2-1-4-2-5-4c2 0 4 1 5 3 M12 18c2-1 4-2 5-4c-2 0-4 1-5 3" },
     { "Key": "steel", "Path": "M5 4h14v3h-5v10h5v3H5v-3h5V7H5z" },
@@ -40,12 +45,12 @@
     { "Key": "pin", "Path": "M9 3h6l-1 6 3 3v2H7v-2l3-3z M12 14v7" }
   ],
   "ResourceGroups": [
-    { "Name": "Gıda ve sağlık", "Keys": ["food", "fertilizer", "medicine"] },
-    { "Name": "Temel malzeme", "Keys": ["steel", "cement", "aluminum"] },
-    { "Name": "Petrokimya", "Keys": ["fuel", "chemical", "rubber", "tire"] },
-    { "Name": "Makine ve parça", "Keys": ["machine", "spare", "consumable", "powerUnit"] },
-    { "Name": "Elektronik", "Keys": ["electronics", "battery", "microchip", "cable", "transformer"] },
-    { "Name": "Doğal kaynaklar", "Keys": ["oil", "gas", "coal", "iron", "copper", "chrome", "titanium", "lithium", "boron", "uranium", "limestone", "gold"] }
+    { "Name": "Gıda ve sağlık", "IconFolder": "Icons/Economy/FoodHealth", "Keys": ["food", "fertilizer", "medicine"] },
+    { "Name": "Temel malzeme", "IconFolder": "Icons/Economy/BaseMaterials", "Keys": ["steel", "cement", "aluminum"] },
+    { "Name": "Petrokimya", "IconFolder": "Icons/Economy/Petrochemicals", "Keys": ["fuel", "chemical", "rubber", "tire"] },
+    { "Name": "Makine ve parça", "IconFolder": "Icons/Economy/MachineryParts", "Keys": ["machine", "spare", "consumable", "powerUnit"] },
+    { "Name": "Elektronik", "IconFolder": "Icons/Economy/Electronics", "Keys": ["electronics", "battery", "microchip", "cable", "transformer"] },
+    { "Name": "Doğal kaynaklar", "IconFolder": "Icons/Economy/NaturalResources", "Keys": ["oil", "gas", "coal", "iron", "copper", "chrome", "titanium", "lithium", "boron", "uranium", "limestone", "gold"] }
   ],
   "Tabs": [
     { "Key": "extract", "Label": "Çıkarma", "Note": "Makine, sarf malzemesi ve enerji kullanmaz." },

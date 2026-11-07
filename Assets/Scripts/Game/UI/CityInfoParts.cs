@@ -80,7 +80,7 @@ namespace GeoWar.Game
             {
                 ResourceViewData resource = _session.ResourceViews[CountryReport.DepositResource(definition, building)];
                 VisualElement chip = UiBuilder.Passive(_deposits, "gw-chip");
-                var icon = new IconElement(_session.Icons.Get(resource.Icon), UiColors.Hex(resource.Tint), DepositIconStroke);
+                VisualElement icon = _session.Icons.CreateResourceIcon(resource, DepositIconStroke);
                 icon.AddToClassList("gw-chip-icon");
                 chip.Add(icon);
                 UiBuilder.Text(chip, _session.BuildingViews[building].Deposit, "gw-f-600");

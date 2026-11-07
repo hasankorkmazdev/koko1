@@ -14,7 +14,7 @@ namespace GeoWar.Game
         private const float MinFocusZoom = 1.1f;
         private const float HeaderHeight = 86f;
         private const float DockHeight = 52f;
-        private const float ProvincePanelHeight = 324f;
+        private const float ProvincePanelHeight = 348f;
         private const float ForeignPanelHeight = 135f;
         private const float CountryPanelHeight = 348f;
         private const int NoSlot = -1;

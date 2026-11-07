@@ -4,22 +4,91 @@ using UnityEngine.UIElements;
 
 namespace GeoWar.Game
 {
-    // İkon yollarını açılışta bir kez okur.
+    // İkon yollarını ve kaynak görsellerini açılışta bir kez okur.
     public sealed class IconLibrary
     {
         private readonly Dictionary<string, List<PathCommand>> _icons = new Dictionary<string, List<PathCommand>>();
+        private readonly Dictionary<string, Texture2D> _resourceImages = new Dictionary<string, Texture2D>();
+        private readonly Texture2D _treasuryImage;
+        private readonly Texture2D _moneyImage;
+        private readonly Texture2D _populationImage;
+        private readonly Texture2D _satisfactionHighImage;
+        private readonly Texture2D _satisfactionLowImage;
 
         public IconLibrary(UiData data)
         {
+            _treasuryImage = Resources.Load<Texture2D>(data.TreasuryIcon);
+            _moneyImage = Resources.Load<Texture2D>(data.MoneyIcon);
+            _populationImage = Resources.Load<Texture2D>(data.PopulationIcon);
+            _satisfactionHighImage = Resources.Load<Texture2D>(data.SatisfactionHighIcon);
+            _satisfactionLowImage = Resources.Load<Texture2D>(data.SatisfactionLowIcon);
+
             foreach (IconData icon in data.Icons)
             {
                 _icons.Add(icon.Key, SvgPathParser.Parse(icon.Path));
+            }
+
+            foreach (ResourceGroupData group in data.ResourceGroups)
+            {
+                foreach (string key in group.Keys)
+                {
+                    Texture2D image = Resources.Load<Texture2D>(group.IconFolder + "/" + key);
+                    if (image != null)
+                    {
+                        _resourceImages.Add(key, image);
+                    }
+                }
             }
         }
 
         public List<PathCommand> Get(string key)
         {
             return _icons[key];
+        }
+
+        // Görseli henüz üretilmemiş kaynak, ui.json'daki vektör ikonuyla çizilir.
+        public VisualElement CreateResourceIcon(ResourceViewData view, float strokeWidth)
+        {
+            Texture2D image;
+            if (!_resourceImages.TryGetValue(view.Key, out image))
+            {
+                return new IconElement(Get(view.Icon), UiColors.Hex(view.Tint), strokeWidth);
+            }
+
+            return CreateImage(image);
+        }
+
+        public VisualElement CreateTreasuryIcon()
+        {
+            return CreateImage(_treasuryImage);
+        }
+
+        public VisualElement CreateMoneyIcon()
+        {
+            return CreateImage(_moneyImage);
+        }
+
+        public VisualElement CreatePopulationIcon()
+        {
+            return CreateImage(_populationImage);
+        }
+
+        public VisualElement CreateSatisfactionIcon()
+        {
+            return CreateImage(_satisfactionHighImage);
+        }
+
+        // Memnuniyet eşiği geçince aynı öğenin görseli değişir.
+        public void ShowSatisfaction(VisualElement icon, bool isLow)
+        {
+            icon.style.backgroundImage = new StyleBackground(isLow ? _satisfactionLowImage : _satisfactionHighImage);
+        }
+
+        private static VisualElement CreateImage(Texture2D image)
+        {
+            var element = new VisualElement { pickingMode = PickingMode.Ignore };
+            element.style.backgroundImage = new StyleBackground(image);
+            return element;
         }
     }
 
@@ -28,7 +97,7 @@ namespace GeoWar.Game
     {
         private const float ViewSize = 24f;
 
-        private readonly List<PathCommand> _path;
+        private List<PathCommand> _path;
         private readonly float _strokeWidth;
         private bool _filled;
         private Color _color;
@@ -41,6 +110,15 @@ namespace GeoWar.Game
             _filled = filled;
             pickingMode = PickingMode.Ignore;
             generateVisualContent += Draw;
+        }
+
+        public void SetPath(List<PathCommand> path)
+        {
+            if (_path != path)
+            {
+                _path = path;
+                MarkDirtyRepaint();
+            }
         }
 
         public void SetColor(Color color)

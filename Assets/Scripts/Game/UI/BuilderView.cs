@@ -15,6 +15,7 @@ namespace GeoWar.Game
         private const float CostGap = 3f;
         private const float StrokeBold = 2.4f;
         private const float StrokeItem = 1.8f;
+        private const float StrokeCost = 2f;
         private const string DefaultTab = "industry";
         private const string ExtractionTab = "extract";
         private const string NoCost = "—";
@@ -112,12 +113,13 @@ namespace GeoWar.Game
             _costValues = new Label[materialCount + 1];
             _costResources = new int[materialCount];
             VisualElement costs = UiBuilder.Passive(footer, "gw-costs");
-            _costValues[0] = AddCost(costs, "Para", 0f);
+            _costValues[0] = AddCost(costs, "Para", 0f, session.Icons.CreateMoneyIcon());
             for (int i = 0; i < materialCount; i++)
             {
                 int resource = session.Definition.ResourceIndex(session.Ui.BuildMaterials[i]);
                 _costResources[i] = resource;
-                _costValues[i + 1] = AddCost(costs, session.ResourceViews[resource].Name, CostGap);
+                ResourceViewData view = session.ResourceViews[resource];
+                _costValues[i + 1] = AddCost(costs, view.Name, CostGap, session.Icons.CreateResourceIcon(view, StrokeCost));
             }
 
             VisualElement actions = UiBuilder.Passive(footer, "gw-builder-actions");
@@ -163,12 +165,16 @@ namespace GeoWar.Game
             RefreshDetail();
         }
 
-        private static Label AddCost(VisualElement parent, string caption, float marginLeft)
+        private static Label AddCost(VisualElement parent, string caption, float marginLeft, VisualElement icon)
         {
             VisualElement cell = UiBuilder.Passive(parent, "gw-cost");
             cell.style.marginLeft = marginLeft;
             UiBuilder.Text(cell, caption, "gw-stat-caption");
-            return UiBuilder.Text(cell, "", "gw-cost-value", "gw-f-700");
+
+            VisualElement valueRow = UiBuilder.Passive(cell, "gw-value-row");
+            icon.AddToClassList("gw-cost-icon");
+            valueRow.Add(icon);
+            return UiBuilder.Text(valueRow, "", "gw-cost-value", "gw-f-700");
         }
 
         private int FindTab(string key)
@@ -534,7 +540,7 @@ namespace GeoWar.Game
             foreach (int resource in resources)
             {
                 ResourceViewData view = _session.ResourceViews[resource];
-                AddItem(view.Icon, UiColors.Hex(view.Tint), view.Name);
+                AddItem(_session.Icons.CreateResourceIcon(view, IconStroke), view.Name);
             }
 
             _root.style.display = resources.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
@@ -544,7 +550,8 @@ namespace GeoWar.Game
         public void ShowText(string iconKey, string text)
         {
             _items.Clear();
-            AddItem(iconKey, UiColors.Gold, text);
+            bool hasIcon = !string.IsNullOrEmpty(iconKey);
+            AddItem(hasIcon ? new IconElement(_session.Icons.Get(iconKey), UiColors.Gold, IconStroke) : null, text);
             _root.style.display = DisplayStyle.Flex;
         }
 
@@ -553,12 +560,11 @@ namespace GeoWar.Game
             _root.style.display = DisplayStyle.None;
         }
 
-        private void AddItem(string iconKey, Color iconColor, string text)
+        private void AddItem(VisualElement icon, string text)
         {
             VisualElement item = UiBuilder.Passive(_items, "gw-builder-recipe-item");
-            if (!string.IsNullOrEmpty(iconKey))
+            if (icon != null)
             {
-                var icon = new IconElement(_session.Icons.Get(iconKey), iconColor, IconStroke);
                 icon.AddToClassList("gw-builder-recipe-icon");
                 item.Add(icon);
             }
