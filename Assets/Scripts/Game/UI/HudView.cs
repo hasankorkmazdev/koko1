@@ -134,10 +134,10 @@ namespace GeoWar.Game
             _readyCount.text = _session.ReadyProvinceCount.ToString();
             _offerCount.text = _session.OfferCount.ToString();
 
-            // İsyan düğmesi yalnızca isyan varken görünür.
+            // İsyan düğmesi yalnızca isyan veya okunmamış şehir kaybı varken görünür.
             int rebellions = _session.RebellionCities.Count;
             _rebellionCount.text = rebellions.ToString();
-            _rebellionCount.parent.style.display = rebellions > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            _rebellionCount.parent.style.display = rebellions > 0 || _session.HasUnreadLosses ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void BuildHeader(VisualElement frame)

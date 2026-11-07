@@ -11,6 +11,8 @@ namespace GeoWar.Game
         private const int NoResource = -1;
         private const float IconStroke = 2f;
         private const int MoneyIconIndex = 0;
+        private const string WarningIconKey = "warning";
+        private const string WarningDimClass = "gw-table-warning-dim";
 
         public const int NoMoneyColumn = -1;
 
@@ -23,7 +25,10 @@ namespace GeoWar.Game
         private readonly MetalPanel _root;
         private readonly VisualElement _iconHolder;
         private readonly Label _name;
+        private readonly IconElement _warning;
         private readonly Label[] _values = new Label[ValueCount];
+
+        private bool _warningShown;
 
         public int Resource { get; private set; } = NoResource;
 
@@ -35,7 +40,14 @@ namespace GeoWar.Game
             parent.Add(_root);
 
             _iconHolder = UiBuilder.Passive(_root, "gw-table-icon");
-            _name = UiBuilder.Text(_root, "", "gw-table-name", "gw-f-600");
+            VisualElement nameBox = UiBuilder.Passive(_root, "gw-table-name-box");
+            _name = UiBuilder.Text(nameBox, "", "gw-table-name", "gw-f-600");
+
+            _warning = new IconElement(session.Icons.Get(WarningIconKey), UiColors.Alarm, 0f, true);
+            _warning.AddToClassList("gw-table-warning");
+            _warning.style.display = DisplayStyle.None;
+            nameBox.Add(_warning);
+
             for (int i = 0; i < ValueCount; i++)
             {
                 _values[i] = i == moneyColumn
@@ -91,6 +103,24 @@ namespace GeoWar.Game
         {
             _values[column].text = text;
             _values[column].style.color = color;
+        }
+
+        public void SetWarning(bool visible)
+        {
+            if (visible != _warningShown)
+            {
+                _warningShown = visible;
+                _warning.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
+
+        // Atışın kendisi USS geçişidir; burada yalnızca yönü değişir.
+        public void SetWarningDim(bool dim)
+        {
+            if (_warningShown)
+            {
+                _warning.EnableInClassList(WarningDimClass, dim);
+            }
         }
 
         public void SetSelected(bool selected)

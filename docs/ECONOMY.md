@@ -1,6 +1,8 @@
 1. Para:
    1. Para vergiden ve pazarda yapılan satışlardan gelir.
    2. Vergi oranı şehir bazında veya tüm şehirler için toplu ayarlanabilir.
+      1. Seçilen oran hemen geçerli olmaz, 1 Ocak'ta yürürlüğe girer.
+      2. Yürürlükteki oran yılda en fazla bir kez değişir; arka arkaya değiştirilemez.
    3. Giderler:
       1. Ordu bakımı: Ordunun düzenli bir bakım gideri vardır; para ile ödenir.
 2. Ticaret:

@@ -81,7 +81,6 @@ namespace GeoWar.Simulation
                 world.CountryFacilityStart[country] = nextSlot;
                 world.RandomState[country] = DeterministicRandom.Next(ref random);
                 world.Money[country] = settings.StartingMoney;
-                world.TaxPercent[country] = settings.TaxPercent;
                 world.GridLossPermille[country] = settings.GridLossPermille;
 
                 // Örnek başkent konumu. Gerçek haritada oyun bunu il merkeziyle değiştirir.
@@ -106,6 +105,8 @@ namespace GeoWar.Simulation
                 {
                     world.Population[nextCity] = populations[nextCity];
                     world.CityOwner[nextCity] = country;
+                    world.CityTaxPercent[nextCity] = settings.TaxPercent;
+                    world.CityNextTaxPercent[nextCity] = settings.TaxPercent;
                     world.Satisfaction[nextCity] = settings.StartingSatisfactionPermille;
                     world.CitySlotStart[nextCity] = nextSlot;
                     population += populations[nextCity];
@@ -146,6 +147,12 @@ namespace GeoWar.Simulation
                     world.RandomState[country] = DeterministicRandom.Next(ref random);
                     world.EnergyRatioPermille[country] = EconomyDefinition.Permille;
                 }
+            }
+
+            // Örnek başkent: ülkenin en kalabalık şehri. Gerçek haritada oyun bunu veri dosyasındaki başkentle değiştirir.
+            for (int country = 0; country < settings.CountryCount; country++)
+            {
+                world.CountryCapital[country] = CityOwnership.LargestCity(world, country);
             }
 
             CountryDistances.SetFromCapitals(world, capitalLat, capitalLon);

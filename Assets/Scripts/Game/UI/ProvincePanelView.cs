@@ -25,6 +25,7 @@ namespace GeoWar.Game
         private readonly GameSession _session;
         private readonly FacilityText _text;
         private readonly Action<int> _openBuilder;
+        private readonly Action<int> _openTax;
         private readonly Action _changed;
         private readonly CityInfoParts _info;
 
@@ -35,12 +36,15 @@ namespace GeoWar.Game
         private readonly Label _satisfaction;
         private readonly VisualElement _satisfactionFill;
         private readonly Label _tax;
+        private Label _taxAction;
         private readonly Label _slotCaption;
         private readonly ScrollView _tiles;
         private readonly MetalPanel _detailCard;
         private readonly VisualElement _emptyDetail;
         private readonly VisualElement _builtDetail;
-        private readonly IconElement _detailIcon;
+        private readonly VisualElement _detailHead;
+        private VisualElement _detailIcon;
+        private int _detailIconBuilding = WorldState.NoBuilding;
         private readonly Label _detailName;
         private readonly Label _detailLevel;
         private readonly Label _detailInfo;
@@ -57,11 +61,12 @@ namespace GeoWar.Game
         private int _city = -1;
         private int _selectedSlot = -1;
 
-        public ProvincePanelView(VisualElement frame, GameSession session, FacilityText text, Action close, Action openCountry, Action<int> openBuilder, Action changed)
+        public ProvincePanelView(VisualElement frame, GameSession session, FacilityText text, Action close, Action openCountry, Action<int> openBuilder, Action<int> openTax, Action changed)
         {
             _session = session;
             _text = text;
             _openBuilder = openBuilder;
+            _openTax = openTax;
             _changed = changed;
             _info = new CityInfoParts(session);
 
@@ -91,7 +96,7 @@ namespace GeoWar.Game
             VisualElement bar = UiBuilder.Passive(satisfactionRow, "gw-sat-bar");
             _satisfactionFill = UiBuilder.Passive(bar, "gw-bar-fill");
 
-            _tax = AddStat(stats, "Vergi (ülke)", StatGap);
+            _tax = AddTaxStat(stats);
 
             VisualElement resources = UiBuilder.Passive(_panel, "gw-resources");
             _info.AddDeposits(resources);
@@ -113,12 +118,12 @@ namespace GeoWar.Game
             BuildEmptyDetail(_emptyDetail);
 
             _builtDetail = UiBuilder.Passive(_detailCard, "gw-detail");
-            VisualElement detailHead = UiBuilder.Passive(_builtDetail, "gw-detail-head");
+            _detailHead = UiBuilder.Passive(_builtDetail, "gw-detail-head");
             _detailIcon = new IconElement(session.Icons.Get(EmptySlotIcon), UiColors.Text, StrokeTile);
             _detailIcon.AddToClassList("gw-detail-icon");
-            detailHead.Add(_detailIcon);
+            _detailHead.Add(_detailIcon);
 
-            VisualElement detailText = UiBuilder.Passive(detailHead, "gw-detail-text");
+            VisualElement detailText = UiBuilder.Passive(_detailHead, "gw-detail-text");
             VisualElement detailRow = UiBuilder.Passive(detailText, "gw-detail-row");
             _detailName = UiBuilder.Text(detailRow, "", "gw-detail-name", "gw-f-oswald-700");
             _detailLevel = UiBuilder.Text(detailRow, "", "gw-detail-level", "gw-f-700");
@@ -207,7 +212,27 @@ namespace GeoWar.Game
                 : concessionDays > 0 ? "Taviz · " + concessionDays + " gün"
                 : _session.Map.ProvinceIds[_city];
             _sub.style.color = rebellionDays > 0 ? UiColors.Warn : concessionDays > 0 ? UiColors.Gold : DisabledText;
-            _tax.text = "%" + (concessionDays > 0 ? 0 : world.TaxPercent[_session.Player]);
+            _tax.text = "%" + TaxCommands.EffectivePercent(world, _city);
+
+            // Bekleyen karar varsa kutuda görünür: oran ocakta değişecek.
+            int next = world.CityNextTaxPercent[_city];
+            _taxAction.text = next != world.CityTaxPercent[_city] ? _session.Ui.Months[0] + "'ta %" + next : "Ayarla";
+        }
+
+        // Vergi kutusu aynı zamanda ayar düğmesidir.
+        private Label AddTaxStat(VisualElement parent)
+        {
+            MetalPanel cell = UiBuilder.MetalButton().WithClick(() => _openTax(_city));
+            cell.AddToClassList("gw-stat");
+            cell.AddToClassList("gw-stat-button");
+            cell.style.marginLeft = StatGap;
+            parent.Add(cell);
+
+            UiBuilder.Text(cell, "Vergi", "gw-stat-caption");
+            VisualElement row = UiBuilder.Passive(cell, "gw-sat-row");
+            Label value = UiBuilder.Text(row, "", "gw-stat-value", "gw-f-700");
+            _taxAction = UiBuilder.Text(row, "", "gw-stat-caption", "gw-stat-action");
+            return value;
         }
 
         private static Label AddStat(VisualElement parent, string caption, float marginLeft)
@@ -249,8 +274,9 @@ namespace GeoWar.Game
 
                 int building = world.FacilityBuilding[slot];
                 bool isEmpty = building == WorldState.NoBuilding;
-                string iconKey = isEmpty ? EmptySlotIcon : _session.BuildingViews[building].Icon;
-                var icon = new IconElement(_session.Icons.Get(iconKey), isEmpty ? TilePlusTint : UiColors.Text, StrokeTile);
+                VisualElement icon = isEmpty
+                    ? new IconElement(_session.Icons.Get(EmptySlotIcon), TilePlusTint, StrokeTile)
+                    : _session.Icons.CreateBuildingIcon(_session.BuildingViews[building], UiColors.Text, StrokeTile);
                 icon.AddToClassList("gw-tile-icon");
                 tile.Add(icon);
 
@@ -285,6 +311,21 @@ namespace GeoWar.Game
             }
         }
 
+        // Bu bölüm her gün yenilenir; ikon yalnızca seçili tesisin türü değişince yeniden kurulur.
+        private void ShowDetailIcon(int building)
+        {
+            if (building == _detailIconBuilding)
+            {
+                return;
+            }
+
+            _detailIconBuilding = building;
+            _detailIcon.RemoveFromHierarchy();
+            _detailIcon = _session.Icons.CreateBuildingIcon(_session.BuildingViews[building], UiColors.Text, StrokeTile);
+            _detailIcon.AddToClassList("gw-detail-icon");
+            _detailHead.Insert(0, _detailIcon);
+        }
+
         private void RefreshDetail()
         {
             WorldState world = _session.World;
@@ -301,7 +342,7 @@ namespace GeoWar.Game
             int level = world.FacilityLevel[_selectedSlot];
             FacilityStatus status = _text.Status(_selectedSlot);
             UiBuilder.SetBorder(_detailCard, status.Accent);
-            _detailIcon.SetPath(_session.Icons.Get(_session.BuildingViews[building].Icon));
+            ShowDetailIcon(building);
             _detailName.text = _session.BuildingViews[building].Name;
             _detailLevel.text = "Seviye " + level;
             _detailInfo.text = _text.Rate(building, world.FacilityRecipe[_selectedSlot], level) + " · " + _text.Owner(_selectedSlot);

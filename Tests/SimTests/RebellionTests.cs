@@ -39,8 +39,78 @@ namespace GeoWar.Tests
             RebelStateDoesNotBlockOwnFlights();
             NoEmptySlotKeepsCity();
             LosingEveryCityDoesNotBreakTheDay();
+            SampleWorldStartsWithLargestCityAsCapital();
+            LostCapitalMovesToLargestCity();
+            CapitalCanFoundRebelState();
+            CitiesLostOnSameDayCannotBecomeCapital();
+            LosingEveryCityLeavesNoCapital();
             ResultDoesNotDependOnSplitting();
             CityStopsHoldingDaysAfterHandover();
+            WindowOpensOnlyForFirstOfWave();
+            UnrestGrowsAsSatisfactionFalls();
+        }
+
+        private static void WindowOpensOnlyForFirstOfWave()
+        {
+            WorldState world = MakeWorld(8, 1);
+            var alerts = new RebellionAlerts();
+            bool Ask()
+            {
+                return alerts.ShouldOpen(_definition, world, Player);
+            }
+
+            _check("pencere: isyan yokken açılmaz", !Ask());
+
+            Rebellions.Start(_definition, world, Player, 0);
+            _check("pencere: ilk isyanda açılır", Ask());
+            _check("pencere: yeni isyan yoksa açılmaz", !Ask());
+
+            Rebellions.Start(_definition, world, Player, 2);
+            _check("pencere: isyan sürerken yenisinde açılmaz", !Ask());
+
+            Rebellions.TryAnswerAll(_definition, world, Player, RebellionResponse.Concession);
+            Rebellions.Start(_definition, world, Player, 4);
+            _check("pencere: cevaptan hemen sonraki isyanda açılmaz", !Ask());
+
+            Rebellions.TryAnswerAll(_definition, world, Player, RebellionResponse.Concession);
+            world.Day += _balance.RebellionAlertGapDays;
+            Rebellions.Start(_definition, world, Player, 6);
+            _check("pencere: süre dolunca yeni dalgada açılır", Ask());
+
+            world.Day += _balance.RebellionAlertGapDays;
+            Rebellions.Start(_definition, world, Player, 7);
+            _check("pencere: süre dolsa da isyan sürerken açılmaz", !Ask());
+        }
+
+        private static void UnrestGrowsAsSatisfactionFalls()
+        {
+            WorldState world = MakeWorld(2, 1);
+            int low = _balance.LowSatisfactionPermille;
+            int Level(int satisfaction)
+            {
+                world.Satisfaction[0] = satisfaction;
+                return UnrestLevel.Of(_balance, world, 0);
+            }
+
+            _check("huzursuzluk: memnun şehirde yok", Level(Permille) == 0);
+            _check("huzursuzluk: eşikte yok", Level(low) == 0);
+            _check("huzursuzluk: eşiğin yarısında yarım", Level(low / 2) == UnrestLevel.Max / 2);
+            _check("huzursuzluk: sıfırda en üstte", Level(0) == UnrestLevel.Max);
+
+            bool grows = true;
+            for (int satisfaction = low; satisfaction > 0; satisfaction--)
+            {
+                grows &= Level(satisfaction - 1) >= Level(satisfaction);
+            }
+
+            _check("huzursuzluk: memnuniyet düştükçe artar", grows);
+
+            world.Satisfaction[0] = Permille;
+            Rebellions.Start(_definition, world, Player, 0);
+            _check("huzursuzluk: isyandaki şehir en üstte", UnrestLevel.Of(_balance, world, 0) == UnrestLevel.Max);
+
+            Rebellions.TryAnswer(_definition, world, 0, RebellionResponse.Concession);
+            _check("huzursuzluk: isyan bitince memnuniyete döner", UnrestLevel.Of(_balance, world, 0) == 0);
         }
 
         private static void ListsStartInOrder()
@@ -76,7 +146,7 @@ namespace GeoWar.Tests
         private static void LowSatisfactionStartsLimitedRebellions()
         {
             WorldState world = MakeWorld(30, 3);
-            world.TaxPercent[Player] = MaxTax;
+            SetPlayerTax(world, MaxTax);
 
             bool withinLimit = true;
             for (int day = 0; day < 40; day++)
@@ -93,7 +163,7 @@ namespace GeoWar.Tests
         private static void CalmCityDoesNotRebel()
         {
             WorldState world = MakeWorld(10, 2);
-            world.TaxPercent[Player] = MaxTax;
+            SetPlayerTax(world, MaxTax);
             for (int city = 0; city < 10; city++)
             {
                 world.CityCalmDays[city] = 200;
@@ -156,7 +226,7 @@ namespace GeoWar.Tests
             _check("taviz: üretim yarıya iner", world.FacilityOutputSpeedPermille[slot] == normalSpeed * _balance.ConcessionProductionPermille / Permille);
 
             WorldState two = MakeWorld(4, 1);
-            two.TaxPercent[Player] = MaxTax;
+            SetPlayerTax(two, MaxTax);
             two.CityConcessionDays[0] = _balance.ConcessionDays;
             AdvanceDays(two, 15);
             _check("taviz: vergi cezası kalkar", two.Satisfaction[0] > two.Satisfaction[3]);
@@ -246,7 +316,7 @@ namespace GeoWar.Tests
             Rebellions.AdvanceDay(_definition, world);
 
             _check("devlet: şehir elden çıkar", world.CityOwner[city] == rebel);
-            _check("devlet: boş yere kurulur", world.RebelParent[rebel] == Player && world.RebelStateOf[Player] == rebel && world.RebelCapital[rebel] == city);
+            _check("devlet: boş yere kurulur", world.RebelParent[rebel] == Player && world.RebelStateOf[Player] == rebel && world.CountryCapital[rebel] == city);
             _check("devlet: isyan kapanır", world.CityRebellionDays[city] == 0 && world.CountryRebellionCount[Player] == 0 && world.CityRebelNeighbors[1] == 0);
             _check("devlet: kayıp sayılır", world.CountryCitiesLost[Player] == 1 && world.CountryLastLostCity[Player] == city);
             _check("devlet: şehir listeleri güncellenir", CountryReport.CityCount(world, Player) == 4 && CountryReport.CityCount(world, rebel) == 1 && world.CountryCities[world.CountryCityStart[rebel]] == city);
@@ -265,7 +335,6 @@ namespace GeoWar.Tests
             _check("devlet: ana ülkeyle savaşır", world.CountryAtWar[Player * count + rebel] && world.CountryAtWar[rebel * count + Player]);
             _check("devlet: ticaret yolu kapanır", CountryRoutes.Route(_definition, world, Player, rebel) == CountryRoutes.NoRoute);
             _check("devlet: kara sınırı oluşur", world.CountryLandNeighbor[Player * count + rebel] && world.CountryLandNeighbor[rebel * count + Player]);
-            _check("devlet: vergi ana ülkeden", world.TaxPercent[rebel] == world.TaxPercent[Player]);
             _check("devlet: mesafe ana ülkeden", world.CountryDistanceKm[Ai * count + rebel] == world.CountryDistanceKm[Ai * count + Player]);
             _check("devlet: en yakınlar sırasına girer", NearestPlace(world, Ai, rebel) < NearestPlace(world, Ai, rebel + 1));
             _check("devlet: AI yönetir", !world.CountryPlayerControlled[rebel] && !world.CountryManualTrade[rebel]);
@@ -280,7 +349,7 @@ namespace GeoWar.Tests
 
             _check("katılım: komşu olmayan şehir de aynı devlete", world.CityOwner[1] == rebel && world.CityOwner[4] == rebel);
             _check("katılım: ikinci devlet kurulmaz", !Rebellions.IsRebelState(world, rebel + 1));
-            _check("katılım: ilk şehir başkent kalır", world.RebelCapital[rebel] == 1);
+            _check("katılım: ilk şehir başkent kalır", world.CountryCapital[rebel] == 1);
             _check("katılım: liste sıralı", CountryReport.CityCount(world, rebel) == 2 && world.CountryCities[world.CountryCityStart[rebel]] == 1 && world.CountryCities[world.CountryCityStart[rebel] + 1] == 4);
             _check("katılım: ana ülkede kalanlar", CountryReport.CityCount(world, Player) == 4);
         }
@@ -343,12 +412,85 @@ namespace GeoWar.Tests
             _check("hepsi gider: gün çalışmaya devam eder", world.Day == 10 && world.CountryPopulation[Player] == 0);
         }
 
+        private static void SampleWorldStartsWithLargestCityAsCapital()
+        {
+            WorldState world = MakeWorld(5, 2);
+            int capital = world.CountryCapital[Player];
+            bool isLargest = capital != WorldState.NoCity;
+            for (int city = 0; city < 5; city++)
+            {
+                isLargest &= world.Population[city] <= world.Population[capital];
+            }
+
+            _check("başkent: örnek dünyada en kalabalık şehir", isLargest && world.CityOwner[capital] == Player);
+            _check("başkent: her ülkenin kendi şehri", world.CityOwner[world.CountryCapital[Ai]] == Ai);
+            _check("başkent: boş devlet yerinde yok", world.CountryCapital[world.BaseCountryCount] == WorldState.NoCity);
+        }
+
+        private static void LostCapitalMovesToLargestCity()
+        {
+            WorldState world = MakeCapitalWorld(500, 300, 400, 400, 100);
+            int rebel = world.BaseCountryCount;
+
+            ForceSecession(world, 4);
+            _check("başkent: başka şehir gidince değişmez", world.CountryCapital[Player] == 0);
+            _check("başkent: isyancı devletin başkenti ilk şehri", world.CountryCapital[rebel] == 4);
+
+            int otherCapital = world.CountryCapital[Ai];
+            ForceSecession(world, 0);
+            _check("başkent: en kalabalık şehre geçer, eşitlikte önceki şehre", world.CountryCapital[Player] == 2);
+            _check("başkent: katılan şehir isyancının başkentini değiştirmez", world.CityOwner[0] == rebel && world.CountryCapital[rebel] == 4);
+            _check("başkent: başka ülkeninki değişmez", world.CountryCapital[Ai] == otherCapital);
+        }
+
+        private static void CapitalCanFoundRebelState()
+        {
+            WorldState world = MakeCapitalWorld(500, 300, 400);
+            int rebel = world.BaseCountryCount;
+
+            ForceSecession(world, 0);
+            _check("başkent: devleti kuran eski başkent yeni devletin başkenti", world.CountryCapital[rebel] == 0);
+            _check("başkent: ana ülkeye yeni başkent seçilir", world.CountryCapital[Player] == 2);
+        }
+
+        private static void CitiesLostOnSameDayCannotBecomeCapital()
+        {
+            WorldState world = MakeCapitalWorld(500, 300, 400);
+            Rebellions.Start(_definition, world, Player, 0);
+            Rebellions.Start(_definition, world, Player, 2);
+            world.CityRebellionDays[0] = 1;
+            world.CityRebellionDays[2] = 1;
+            Rebellions.AdvanceDay(_definition, world);
+
+            _check("başkent: aynı gün giden şehir seçilmez", world.CountryCapital[Player] == 1);
+        }
+
+        private static void LosingEveryCityLeavesNoCapital()
+        {
+            WorldState world = MakeCapitalWorld(500, 300);
+            int rebel = world.BaseCountryCount;
+            ForceSecession(world, 0);
+            ForceSecession(world, 1);
+
+            _check("başkent: şehri kalmayan ülkede yok", world.CountryCapital[Player] == WorldState.NoCity);
+            _check("başkent: isyancı devletinki kalır", world.CountryCapital[rebel] == 0);
+        }
+
+        // Oyuncunun şehirleri verilen nüfuslarla başlar, ilk şehir başkenttir.
+        private static WorldState MakeCapitalWorld(params long[] populations)
+        {
+            WorldState world = MakeWorld(populations.Length, 2);
+            Array.Copy(populations, world.Population, populations.Length);
+            world.CountryCapital[Player] = 0;
+            return world;
+        }
+
         private static void ResultDoesNotDependOnSplitting()
         {
             WorldState whole = MakeWorld(20, 3);
             WorldState split = MakeWorld(20, 3);
-            whole.TaxPercent[Player] = MaxTax;
-            split.TaxPercent[Player] = MaxTax;
+            SetPlayerTax(whole, MaxTax);
+            SetPlayerTax(split, MaxTax);
 
             AdvanceDays(whole, 120);
             var clock = new SimulationClock(_balance.SecondsPerDay) { Speed = 1 };
@@ -361,7 +503,7 @@ namespace GeoWar.Tests
             _check("belirlilik: karelere dağıtmak sonucu değiştirmez", whole.Checksum() == split.Checksum());
 
             WorldState again = MakeWorld(20, 3);
-            again.TaxPercent[Player] = MaxTax;
+            SetPlayerTax(again, MaxTax);
             AdvanceDays(again, 120);
             _check("belirlilik: aynı seed aynı isyanlar", whole.Checksum() == again.Checksum());
         }
@@ -389,6 +531,17 @@ namespace GeoWar.Tests
             world.CountryPlayerControlled[Player] = true;
             world.CountryManualTrade[Player] = true;
             return world;
+        }
+
+        // Denge dosyasındaki üst sınırdan bağımsızdır: bu testler isyanı sınar, vergi ayarını değil.
+        private static void SetPlayerTax(WorldState world, int percent)
+        {
+            int end = world.CountryCityStart[Player + 1];
+            for (int i = world.CountryCityStart[Player]; i < end; i++)
+            {
+                world.CityTaxPercent[world.CountryCities[i]] = percent;
+                world.CityNextTaxPercent[world.CountryCities[i]] = percent;
+            }
         }
 
         private static void AdvanceDays(WorldState world, int days)

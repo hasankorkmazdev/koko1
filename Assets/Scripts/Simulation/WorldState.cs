@@ -29,6 +29,14 @@ namespace GeoWar.Simulation
 
         public int Day;
 
+        // Oyunun başladığı tarih. Takvime bağlı kurallar bugünü bundan hesaplar.
+        public DateTime StartDate;
+
+        public DateTime Date
+        {
+            get { return StartDate.AddDays(Day); }
+        }
+
         // Ülkelerin şehirleri: CountryCities[CountryCityStart[ülke] .. CountryCityStart[ülke + 1]]. Slotlar da aynı biçimde.
         // Oyun başında listeler sıralıdır; şehir el değiştirince yeniden kurulur.
         public readonly int[] CountryCityStart;
@@ -51,7 +59,6 @@ namespace GeoWar.Simulation
         public readonly int[] EnergyRatioPermille;
         public readonly long[] GridCapacityMilli;
         public readonly int[] GridLossPermille;
-        public readonly int[] TaxPercent;
 
         // Başkentler arası mesafe: [alıcı * ülke sayısı + satıcı].
         public readonly int[] CountryDistanceKm;
@@ -85,10 +92,12 @@ namespace GeoWar.Simulation
         // İsyana kendisi cevap veren ülke: oyuncu. AI ülkeleri hemen cevap verir.
         public readonly bool[] CountryPlayerControlled;
 
-        // İsyancı devletin çıktığı ülke, ülkeden çıkan isyancı devlet ve isyancı devletin ilk şehri. Yoksa NoCountry, NoCity.
+        // İsyancı devletin çıktığı ülke ve ülkeden çıkan isyancı devlet. Yoksa NoCountry.
         public readonly int[] RebelParent;
         public readonly int[] RebelStateOf;
-        public readonly int[] RebelCapital;
+
+        // Ülkenin başkenti olan şehir. Şehri olmayan ülkede NoCity.
+        public readonly int[] CountryCapital;
 
         // Ülkede süren isyan sayısı, başlayan isyan toplamı, isyanla kaybedilen şehir toplamı ve kaybedilen son şehir.
         public readonly int[] CountryRebellionCount;
@@ -101,6 +110,10 @@ namespace GeoWar.Simulation
         public readonly int[] Satisfaction;
         public readonly int[] CitySlotStart;
         public readonly int[] CityOwner;
+
+        // Şehrin yürürlükteki vergi oranı ve 1 Ocak'ta yürürlüğe girecek oran. Şehir el değiştirince yürürlükteki oran şehirle gider.
+        public readonly int[] CityTaxPercent;
+        public readonly int[] CityNextTaxPercent;
 
         // Keşfedilmiş kaynaklar: tesis türü indeksine göre bit.
         public readonly long[] CityDeposits;
@@ -170,12 +183,14 @@ namespace GeoWar.Simulation
             CountryPlayerControlled = new bool[countryCount];
             RebelParent = new int[countryCount];
             RebelStateOf = new int[countryCount];
-            RebelCapital = new int[countryCount];
+            CountryCapital = new int[countryCount];
             CountryRebellionCount = new int[countryCount];
             CountryRebellionsStarted = new int[countryCount];
             CountryCitiesLost = new int[countryCount];
             CountryLastLostCity = new int[countryCount];
             CityOwner = new int[cityCount];
+            CityTaxPercent = new int[cityCount];
+            CityNextTaxPercent = new int[cityCount];
             CityNeighborStart = new int[cityCount + 1];
             CityNeighbors = new int[0];
             CityRebellionDays = new int[cityCount];
@@ -192,7 +207,6 @@ namespace GeoWar.Simulation
             EnergyRatioPermille = new int[countryCount];
             GridCapacityMilli = new long[countryCount];
             GridLossPermille = new int[countryCount];
-            TaxPercent = new int[countryCount];
             CountryDistanceKm = new int[countryCount * countryCount];
             NearestCountries = new int[countryCount * countryCount];
             CountryLandNeighbor = new bool[countryCount * countryCount];
@@ -248,7 +262,7 @@ namespace GeoWar.Simulation
             {
                 RebelParent[country] = NoCountry;
                 RebelStateOf[country] = NoCountry;
-                RebelCapital[country] = NoCity;
+                CountryCapital[country] = NoCity;
                 CountryLastLostCity[country] = NoCity;
             }
 
@@ -289,6 +303,9 @@ namespace GeoWar.Simulation
             hash = Mix(hash, FacilityExperience);
             hash = Mix(hash, Satisfaction);
             hash = Mix(hash, CityOwner);
+            hash = Mix(hash, CityTaxPercent);
+            hash = Mix(hash, CityNextTaxPercent);
+            hash = Mix(hash, CountryCapital);
             hash = Mix(hash, CityRebellionDays);
             hash = Mix(hash, CityConcessionDays);
             hash = Mix(hash, CityCalmDays);

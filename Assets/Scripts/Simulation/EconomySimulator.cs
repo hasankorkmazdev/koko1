@@ -27,6 +27,7 @@ namespace GeoWar.Simulation
             SettleMarket(definition, world);
             Rebellions.AdvanceDay(definition, world);
             world.Day++;
+            TaxCommands.AdvanceDate(world);
         }
 
         // Ülkeleri karelere dağıtmak için tek başına çağrılabilir.
@@ -398,8 +399,6 @@ namespace GeoWar.Simulation
                 + FeedPeople(world, stockBase, definition.Fuel, goodsNeed)
                 + FeedPeople(world, stockBase, definition.Electronics, goodsNeed)) / 3;
 
-            int taxPercent = world.TaxPercent[country];
-            int taxPenalty = taxPercent * balance.TaxSatisfactionPenaltyPerPercent;
             int countryTarget = balance.BaseSatisfactionPermille
                 - (Permille - foodRatio) / 2
                 - (Permille - goodsRatio) / 4
@@ -410,9 +409,9 @@ namespace GeoWar.Simulation
             {
                 // Tavizdeki şehir vergi ödemez ve vergiden memnuniyet kaybetmez; isyandaki komşu hedefi düşürür.
                 int city = world.CountryCities[i];
-                bool isConceded = world.CityConcessionDays[city] > 0;
+                int taxPercent = TaxCommands.EffectivePercent(world, city);
                 int target = countryTarget
-                    - (isConceded ? 0 : taxPenalty)
+                    - TaxCommands.SatisfactionPenaltyPermille(balance, taxPercent)
                     - world.CityRebelNeighbors[city] * balance.RebellionNeighborPenaltyPermille;
 
                 int satisfaction = world.Satisfaction[city];
@@ -422,10 +421,7 @@ namespace GeoWar.Simulation
                 long people = world.Population[city];
                 long growth = foodRatio >= Permille ? balance.GrowthPerMillionPerDay : -balance.StarvationPerMillionPerDay;
                 world.Population[city] = people + people * growth / Million;
-                if (!isConceded)
-                {
-                    income += people * taxPercent * balance.TaxIncomePerMillionPerPercent / Million;
-                }
+                income += TaxCommands.DailyIncomeMilli(balance, people, taxPercent);
             }
 
             world.Money[country] += income;

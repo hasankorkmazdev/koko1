@@ -11,7 +11,7 @@ namespace GeoWar.Tests
     {
         private const string PopulationFile = "Assets/Data/Resources/population.json";
         private const string RegionFile = "Assets/Data/Resources/map_region.bytes";
-        private const int MapCityCount = 221;
+        private const int MapCityCount = 376;
         private const long GreeceCensusTotal = 10482487;
         private const long GreeceSourceRounding = 10;
         private const long IranProjectionTotal = 86736000;
@@ -94,6 +94,15 @@ namespace GeoWar.Tests
             check("toplam: Gürcistan sayım + Abhazya + Güney Osetya", TotalOf(data, map, "GE") == 3929581 + 244236 + 56520);
             check("toplam: Suriye IOM", TotalOf(data, map, "SY") == 27897517);
             check("toplam: Azerbaycan birleşmeden etkilenmez", TotalOf(data, map, "AZ") == AzerbaijanTotal);
+            check("toplam: Rusya Rosstat + Kırım + Sivastopol", TotalOf(data, map, "RU") == 143659377 + 1934630 + 547820);
+            check("toplam: Mısır CAPMAS", TotalOf(data, map, "EG") == 105174090);
+            check("toplam: Suudi Arabistan sayımı", TotalOf(data, map, "SA") == 32175224);
+            check("toplam: Ürdün", TotalOf(data, map, "JO") == 11734000);
+            check("toplam: İsrail illeri", TotalOf(data, map, "IL") == 8987700);
+            check("toplam: Filistin", TotalOf(data, map, "PS") == 5483450);
+            check("toplam: Kıbrıs sayımı", TotalOf(data, map, "CY") == 923381);
+            check("toplam: KKTC", TotalOf(data, map, "KKTC") == 382836);
+            check("toplam: Lübnan", TotalOf(data, map, "LB") == 5416225);
         }
 
         private static void EverySourceIsNamed(Action<string, bool> check, PopulationData data, MapData map)

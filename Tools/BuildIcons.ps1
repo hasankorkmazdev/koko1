@@ -4,8 +4,10 @@
 
 $ErrorActionPreference = 'Stop'
 
-$SourceRoot = 'IconSources\Economy'
-$TargetRoot = 'Assets\Art\Resources\Icons\Economy'
+$Roots = @(
+    @{ Source = 'IconSources\Economy'; Target = 'Assets\Art\Resources\Icons\Economy' },
+    @{ Source = 'IconSources\Facilities'; Target = 'Assets\Art\Resources\Icons\Facilities' }
+)
 $IconSize = 128
 $MarginPixels = 4
 $RimPixels = 3
@@ -27,6 +29,8 @@ public static class IconBaker
     private const int Supersample = 4;
     private const byte VisibleAlpha = 32;
     private const byte SolidAlpha = 128;
+    // Arka plan silme araci en dis piksellerde kalinti birakabilir; kirpma bunlari saymaz.
+    private const int EdgeNoisePixels = 2;
 
     public static void Bake(string source, string target, int size, int margin, int rim, Color rimColor, double rimOpacity)
     {
@@ -73,9 +77,9 @@ public static class IconBaker
     {
         byte[] pixels = Read(bitmap);
         int minX = bitmap.Width, minY = bitmap.Height, maxX = -1, maxY = -1;
-        for (int y = 0; y < bitmap.Height; y++)
+        for (int y = EdgeNoisePixels; y < bitmap.Height - EdgeNoisePixels; y++)
         {
-            for (int x = 0; x < bitmap.Width; x++)
+            for (int x = EdgeNoisePixels; x < bitmap.Width - EdgeNoisePixels; x++)
             {
                 if (pixels[(y * bitmap.Width + x) * 4 + 3] < VisibleAlpha)
                 {
@@ -190,16 +194,19 @@ public static class IconBaker
 '@
 
 $rimColor = [System.Drawing.ColorTranslator]::FromHtml('#' + $RimColorHex)
-$sourceFull = (Resolve-Path $SourceRoot).Path
-$targetFull = (Resolve-Path $TargetRoot).Path
 $count = 0
-foreach ($file in Get-ChildItem $SourceRoot -Recurse -File -Filter *.png) {
-    $target = Join-Path $targetFull $file.FullName.Substring($sourceFull.Length + 1)
-    $temporary = "$target.tmp"
-    $rim = if ($RimKeys -contains $file.BaseName) { $RimPixels } else { 0 }
-    [IconBaker]::Bake($file.FullName, $temporary, $IconSize, $MarginPixels, $rim, $rimColor, $RimOpacity)
-    Move-Item -LiteralPath $temporary -Destination $target -Force
-    $count++
+foreach ($root in $Roots) {
+    New-Item -ItemType Directory -Force -Path $root.Target | Out-Null
+    $sourceFull = (Resolve-Path $root.Source).Path
+    $targetFull = (Resolve-Path $root.Target).Path
+    foreach ($file in Get-ChildItem $root.Source -Recurse -File -Filter *.png) {
+        $target = Join-Path $targetFull $file.FullName.Substring($sourceFull.Length + 1)
+        $temporary = "$target.tmp"
+        $rim = if ($RimKeys -contains $file.BaseName) { $RimPixels } else { 0 }
+        [IconBaker]::Bake($file.FullName, $temporary, $IconSize, $MarginPixels, $rim, $rimColor, $RimOpacity)
+        Move-Item -LiteralPath $temporary -Destination $target -Force
+        $count++
+    }
 }
 
 "$count ikon uretildi."

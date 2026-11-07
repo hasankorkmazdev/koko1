@@ -23,6 +23,13 @@ namespace GeoWar.Simulation
             return net >= 0 ? NeverEnds : world.Stock[country * world.ResourceCount + resource] / -net;
         }
 
+        // Tüketim üretimi aşıyor ve stok verilen gün içinde bitecekse doğrudur.
+        public static bool RunsOutWithin(WorldState world, int country, int resource, long days)
+        {
+            long left = DaysLeft(world, country, resource);
+            return left != NeverEnds && left <= days;
+        }
+
         public static long TotalValueMilli(WorldState world, int country)
         {
             long total = 0;

@@ -46,6 +46,7 @@ namespace GeoWar.Tests
             FactoryShortageCountsAsNeed();
             PlayerOfferIsSoldToAi();
             DaysLeftFollowsNet();
+            RunsOutWithinWarnsBeforeStockEnds();
             ShrinkingListIsSortedBySoonestEnd();
             TotalValueUsesMarketPrice();
             MarketAmountsAreListedInUiData();
@@ -408,6 +409,35 @@ namespace GeoWar.Tests
             _check("stok: artıyorsa bitmez", StockReport.DaysLeft(world, 0, steel) == StockReport.NeverEnds);
         }
 
+        private static void RunsOutWithinWarnsBeforeStockEnds()
+        {
+            const int warningDays = 90;
+            WorldState world = MakeWorld(1);
+            int steel = _definition.ResourceIndex("steel");
+
+            _check("uyarı: stok da tüketim de yoksa çıkmaz", !StockReport.RunsOutWithin(world, 0, steel, warningDays));
+
+            SetStock(world, 0, steel, 10);
+            _check("uyarı: tüketim yoksa az stokta da çıkmaz", !StockReport.RunsOutWithin(world, 0, steel, warningDays));
+
+            SetStock(world, 0, steel, 90);
+            world.DailyConsumed[steel] = 1 * Unit;
+            _check("uyarı: süre içinde bitecekse çıkar", StockReport.RunsOutWithin(world, 0, steel, warningDays));
+
+            SetStock(world, 0, steel, 91);
+            _check("uyarı: süreden uzun yetiyorsa çıkmaz", !StockReport.RunsOutWithin(world, 0, steel, warningDays));
+
+            SetStock(world, 0, steel, 10);
+            world.DailyProduced[steel] = 1 * Unit;
+            _check("uyarı: stok azalmıyorsa çıkmaz", !StockReport.RunsOutWithin(world, 0, steel, warningDays));
+
+            SetStock(world, 0, steel, 0);
+            world.DailyProduced[steel] = 0;
+            world.DailyConsumed[steel] = 0;
+            world.DailyShortage[steel] = 1 * Unit;
+            _check("uyarı: stok bitip tüketim durduysa çıkmaz", !StockReport.RunsOutWithin(world, 0, steel, warningDays));
+        }
+
         private static void ShrinkingListIsSortedBySoonestEnd()
         {
             WorldState world = MakeWorld(1);
@@ -460,6 +490,7 @@ namespace GeoWar.Tests
             }
 
             _check("pazar: miktar düğmeleri veride ve artan sırada", ascending);
+            _check("pazar: uyarı süresi veride", ui.MarketWarningDays > 0);
         }
 
         private static WorldState MakeWorld(int countries)

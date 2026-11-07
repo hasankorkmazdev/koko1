@@ -11,6 +11,7 @@ namespace GeoWar.Game
         public static readonly Color Gold = Hex("#CFAB52");
         public static readonly Color Alarm = Hex("#D9652F");
         public static readonly Color DarkText = Hex("#15110A");
+        public static readonly Color CapitalStar = Hex("#F5DC6E");
 
         public static readonly Color HeaderTop = Hex("#3A392A");
         public static readonly Color HeaderBottom = Hex("#201F16");

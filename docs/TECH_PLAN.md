@@ -27,9 +27,14 @@
    5. Her ülkenin hangi idari seviyeyi şehir sayacağı veri dosyasında tanımlanır.
    6. Türkiye ve komşularının dolgusu 102.522 köşe, 78.649 üçgen tutar; iller ham detayda, arka plan karası 0,04 derecelik ızgarada. Çizgilerle birlikte toplam 301.330 köşedir.
    7. Tüm dünya aynı detayda 907.317 köşe, 614.624 üçgen tutuyor; telefonda ayrıntı seviyesi şart, sınır çizgileri de sadeleştirilmeli.
+   8. 18 ülke ve 376 şehirle dolgu 99.571 köşe, 90.838 üçgen; çizgilerle toplam 411.755 köşe, 246.930 üçgen. Rusya 133.158 ham köşeden 0,02 derecelik sadeleştirmeyle yaklaşık 21.600 köşeye indi; komşu iller ortak sınırda aynı köşeleri kullanır (`Tools/Shared/RingSimplifier.cs`). Bu harita telefonda henüz ölçülmedi.
+   9. Sınır politikası: tek kaynak Natural Earth, fiili kontrol geçerlidir. Kırım Rusya'da, Golan'ın çoğu ve Kudüs'ün tamamı İsrail'de, Kuzey Kıbrıs ayrı ülkedir (KKTC). Akrotiri ve Dhekelia Kıbrıs'ın illerine katılır. İsrail'in başkenti Tel Aviv'dir.
+   10. Toprağı tartışmalı ülke çiftleri savaşta başlar (`ui.json`, `StartingWars`): İsrail-Filistin, İsrail-Suriye, İsrail-Lübnan. Ukrayna oyunda olmadığı için Kırım'ın savaşı yoktur.
 5. Arayüz sırası (UI Toolkit, ölçüler onaylanan ekran tasarımından):
    1. Üst bar, hız kutusu, uyarı şeridi, alt şerit, renk açıklaması ve harita görünümü: hazır; düğmelerin açacağı pencereler sonraki adımlarda.
    2. İl paneli, ülke paneli ve Tesis Kur: hazır; Kaynak ara ve diplomasi düğmeleri henüz bir şey yapmaz.
+      1. Vergi ayarı: il panelindeki kutudan açılan pencere; seçilen oran 1 Ocak'ta yürürlüğe girer, tek düğme aynı kararı tüm şehirlere yazar. Takvim simülasyondadır (`WorldState.StartDate`), başlangıç tarihi `ui.json`'dan gelir.
+      2. Onay bekleyen varsayımlar: oran %0-100 arasında 5'er 5'er değişir (economy.json), başlangıç %20; karar 1 Ocak'a kadar değiştirilebilir; şehir el değiştirince yürürlükteki oran şehirle gider, eski sahibin kararı düşer; tavizdeki şehirde vergi alınmaz, süre bitince yürürlükteki oran geri gelir; AI vergisini değiştirmez.
    3. Kaynak penceresi, raptiyeyle üst bara taşıma ve kaynak kartından açılan bilgi penceresi (fiyat, reçete, kullanım yerleri, şehir bazında üretim): hazır.
       1. Stok ekranı (kaç gün yeteceği, azalan kaynaklar) ve Pazar ekranı (fiyat, elle alım satım): hazır.
       2. Pazar ülkelerin sınırlı teklifleriyle çalışır; yol ücreti başkentler arası mesafeden hesaplanır.
@@ -50,6 +55,8 @@
       2. İsyancı devletler için dizilerin sonunda boş ülke yerleri ayrılır (economy.json, RebelStateSlots). Yer kalmazsa isyan söner, şehir ülkede kalır.
       3. Onay bekleyen varsayımlar: isyancı devlete şehrin nüfus payı kadar stok ve şebeke kapasitesi geçer, para geçmez; isyancı devlet ana ülkeyle savaşta başlar ve mesafeleri ana ülkeden kopyalanır; hazine vergilerden dolar.
       4. Ordu olmadığı için askerlerin geçmesi ve şehri geri alma yoktur. AI yalnızca pazarda alım satım yapar ve isyana cevap verir.
+      5. Onay bekleyen varsayım: isyan penceresi kendiliğinden açıldıktan sonra 30 gün yeniden açılmaz (economy.json, RebellionAlertGapDays). Bu süre olmazsa kıtlıkta cevap verilen isyanın yerine hemen yenisi çıkar ve pencere arka arkaya açılır.
+      6. Kırmızı ton 16 kademelidir ve memnuniyet %40'ın altına inince başlar; renkler yalnızca kademe değişince gönderilir.
    4. Diplomasi.
    5. AI kararları.
    6. Ordu ve savaş, tasarımı bitince.

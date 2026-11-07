@@ -43,6 +43,37 @@ namespace GeoWar.Simulation
             }
         }
 
+        // Başkenti elden çıkan ülkenin en kalabalık şehri başkent olur. Listeler yeniden kurulduktan sonra çağrılır:
+        // aynı gün elden çıkan şehir seçilmez. Şehri kalmayan ülkenin başkenti olmaz.
+        public static void RefreshCapitals(WorldState world)
+        {
+            for (int country = 0; country < world.CountryCount; country++)
+            {
+                int capital = world.CountryCapital[country];
+                if (capital != WorldState.NoCity && world.CityOwner[capital] != country)
+                {
+                    world.CountryCapital[country] = LargestCity(world, country);
+                }
+            }
+        }
+
+        // Eşit nüfusta listede önce gelen seçilir: sonuç her cihazda aynı kalır. Şehri yoksa NoCity.
+        public static int LargestCity(WorldState world, int country)
+        {
+            int largest = WorldState.NoCity;
+            int end = world.CountryCityStart[country + 1];
+            for (int i = world.CountryCityStart[country]; i < end; i++)
+            {
+                int city = world.CountryCities[i];
+                if (largest == WorldState.NoCity || world.Population[city] > world.Population[largest])
+                {
+                    largest = city;
+                }
+            }
+
+            return largest;
+        }
+
         public static void SetCityNeighbors(WorldState world, int[] start, int[] neighbors)
         {
             world.CityNeighborStart = start;

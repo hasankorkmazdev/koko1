@@ -90,6 +90,8 @@ namespace GeoWar.Simulation
         public int SatisfactionStepDivisor;
         public int TaxSatisfactionPenaltyPerPercent;
         public long TaxIncomePerMillionPerPercent;
+        public int TaxMaxPercent;
+        public int TaxStepPercent;
         public long GrowthPerMillionPerDay;
         public long StarvationPerMillionPerDay;
         public int MarketTargetDays;
@@ -113,6 +115,7 @@ namespace GeoWar.Simulation
         public int MaxRebellionsPerCountry;
         public int RebellionDeadlineDays;
         public int RebellionCalmDays;
+        public int RebellionAlertGapDays;
         public int RebellionNeighborPenaltyPermille;
         public int ConcessionDays;
         public int ConcessionProductionPermille;

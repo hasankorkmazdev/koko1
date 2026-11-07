@@ -34,6 +34,7 @@
     3. Memnuniyet düşükse şehirde üretim yavaşlar.
     4. Memnuniyeti eşiğin altına düşen şehirde her gün isyan çıkma ihtimali vardır; memnuniyet düştükçe ihtimal artar.
     5. Şehir el değiştirince memnuniyeti düşük başlar.
+    6. Oyuncunun şehirlerinin rengi memnuniyet düştükçe yavaş yavaş kırmızıya döner.
 11. İsyan:
     1. İsyan çıkınca şehirde üretim durur.
     2. Bir ülkede aynı anda çıkan isyan sayısı sınırlıdır.
@@ -43,16 +44,18 @@
        2. Askeri bastırma: Şehre asker gönderilir; isyan hemen biter ama asker kaybedilir ve memnuniyet daha da düşer.
        3. Yardım paketi: Para ödenir, memnuniyet hemen yükselir.
     5. Aynı anda süren isyanlar tek pencerede toplanır; hepsi tek seçimle çözülebilir.
-    6. İsyan çözülünce şehir belli bir süre yeniden isyan etmez.
-    7. AI ülkesi isyana hemen cevap verir: parası yetiyorsa yardım paketi, yetmiyorsa taviz.
-    8. Oyuncu belli bir süre içinde seçenek seçmezse şehir elden çıkar ve isyancı bir devlet oluşur.
-    9. Bir ülkeden en fazla bir isyancı devlet çıkar; o ülkede isyanla kaybedilen her şehir, komşu olmasa da bu devlete katılır.
-    10. İsyancı devleti AI yönetir.
-    11. İsyancı devletin adı isyanın çıktığı ülkeye göre verilir: "<Ülke> İşçi Emekçi Devleti" (ör. Türkiye İşçi Emekçi Devleti).
-    12. İsyancı devlet kurulunca ona geçenler:
+    6. Pencere yalnızca ilk isyanda kendiliğinden açılır ve oyunu durdurur; sonraki isyanlar ve şehir kayıpları oyunu durdurmaz.
+    7. İsyan çözülünce şehir belli bir süre yeniden isyan etmez.
+    8. AI ülkesi isyana hemen cevap verir: parası yetiyorsa yardım paketi, yetmiyorsa taviz.
+    9. Oyuncu belli bir süre içinde seçenek seçmezse şehir elden çıkar ve isyancı bir devlet oluşur.
+    10. Bir ülkeden en fazla bir isyancı devlet çıkar; o ülkede isyanla kaybedilen her şehir, komşu olmasa da bu devlete katılır.
+    11. İsyancı devleti AI yönetir.
+    12. İsyancı devletin adı isyanın çıktığı ülkeye göre verilir: "<Ülke> İşçi Emekçi Devleti" (ör. Türkiye İşçi Emekçi Devleti).
+    13. İsyancı devlet kurulunca ona geçenler:
        1. Ülkenin kaynaklarının belli bir kısmı
        2. Askerlerin belli bir kısmı
        3. Şehrin nüfusunun tamamı
+    14. Başkent isyancı devlete geçerse ülkenin kalan en kalabalık şehri yeni başkent olur.
 12. Nüfus ve gıda:
     1. Şehirler nüfuslarına göre gıda tüketir.
     2. Gıda yetmezse memnuniyet düşer.

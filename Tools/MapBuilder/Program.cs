@@ -13,9 +13,20 @@ namespace GeoWar.Tools
     {
         private const float LonScale = 30f;
         private const float LatScale = 38.6f;
+        private const double MapXScale = (double)LonScale / LatScale;
         private const double FullDetail = 0;
         private const double CountryGrid = 0.02;
         private const double FarGrid = 0.04;
+        private const double RussiaTolerance = 0.02;
+
+        // Oyunun başladığı bölgeden uzak kara yalnızca yer tutar: daha kaba çizilir, küçük adaları atılır.
+        private const double RemoteTolerance = 0.06;
+        private const double MinRemoteArea = 0.1;
+
+        // Oyunun başladığı bölge: burada kalan arka plan karası eski ayrıntısını korur.
+        private const double NearMinLat = 20;
+        private const double NearMaxLat = 56;
+        private const double NearMaxLon = 64;
 
         // Arka plan karasının sadeleşince oynadığı mesafeden uzağa bakılır.
         private const double CoastProbeGrids = 2;
@@ -30,12 +41,61 @@ namespace GeoWar.Tools
         private const int NeighborTones = 2;
         private const double RegionMinLon = 15;
 
-        // İran'ın en doğu ucu 63,3. Daha azı, sınır komşularını haritadan düşürür ve sınırı deniz gibi gösterir.
-        private const double RegionMaxLon = 64;
-        private const double RegionMinLat = 20;
-        private const double RegionMaxLat = 56;
+        // Rusya'nın doğu ucu 180. boylamı geçer; kaynakta eksi boylamla gelen parçası sağa taşınır.
+        private const double RegionMaxLon = 180;
+        private const double FullCircle = 360;
 
-        private static readonly string[] RegionCountries = { "TR", "GR", "BG", "GE", "AM", "AZ", "IR", "IQ", "SY" };
+        // Suudi Arabistan'ın güney ucu 16,4, Rusya'nın kuzey ucu 81,9. Daha azı, sınır komşularını haritadan düşürür ve sınırı deniz gibi gösterir.
+        private const double RegionMinLat = 12;
+        private const double RegionMaxLat = 84;
+
+        private static readonly string[] RegionCountries = { "TR", "GR", "BG", "GE", "AM", "AZ", "IR", "IQ", "SY", "CY", "KKTC", "RU", "PS", "JO", "EG", "IL", "SA", "LB" };
+
+        // Kaynakta ISO kodu olmayan birimlerin oyundaki ülkesi. Akrotiri ve Dhekelia Kıbrıs'ın illerine katılır.
+        private static readonly Dictionary<string, string> AdminCountries = new Dictionary<string, string>
+        {
+            { "Northern Cyprus", "KKTC" },
+            { "Akrotiri Sovereign Base Area", "CY" },
+            { "Dhekelia Sovereign Base Area", "CY" }
+        };
+
+        // Ayrıntısı düşürülen ülkeler. Rusya ham haliyle kalan bütün illerin iki katından fazla köşe taşıyor.
+        private static readonly Dictionary<string, double> CountryTolerances = new Dictionary<string, double>
+        {
+            { "RU", RussiaTolerance }
+        };
+
+        // Kaynaktaki Türkçe adın işe yaramadığı iller: adı iki ilde aynı, yönetim tipiyle yazılmış veya İngilizce kalmış.
+        private static readonly Dictionary<string, string> ProvinceNames = new Dictionary<string, string>
+        {
+            { "RUS-2400", "Altay Cumhuriyeti" },
+            { "RUS-2399", "Altay Krayı" },
+            { "RUS-2364", "Moskova Oblastı" },
+            { "RUS-2613", "Yahudi Özerk Oblastı" },
+            { "RUS-2305", "Kuzey Osetya" },
+            { "RUS-2610", "Zabaykalsk" },
+            { "RUS-2611", "Primorye" },
+            { "LBN-3060", "Güney Lübnan" },
+            { "LBN-3023", "Kuzey Lübnan" },
+            { "ISR-3053", "Güney İsrail" },
+            { "ISR-3056", "Kuzey İsrail" },
+            { "ISR-3055", "Orta İsrail" },
+            { "JOR-854", "İrbid" },
+            { "JOR-859", "Kerek" },
+            { "JOR-852", "Tafile" },
+            { "JOR-849", "Akabe" },
+            { "JOR-857", "Belka" },
+            { "JOR-850", "Mafrak" },
+            { "JOR-853", "Maan" },
+            { "JOR-860", "Zerka" },
+            { "JOR-855", "Aclun" },
+            { "JOR-856", "Ceraş" },
+            { "SAU-1098", "Doğu Eyaleti" },
+            { "SAU-861", "Kuzey Sınır" },
+            { "EGY-1552", "Sühac" },
+            { "EGY-1530", "Garbiye" }
+        };
+
         private static readonly Dictionary<string, string> NameFixes = new Dictionary<string, string>
         {
             { "Hakkâri", "Hakkari" },
@@ -49,6 +109,12 @@ namespace GeoWar.Tools
         private static readonly Dictionary<string, string[]> ProvinceMerges = new Dictionary<string, string[]>
         {
             { "SYR-4843", new[] { "SYR-144" } }, // Şam: Rif Şam
+            { "RUS-2371", new[] { "RUS-2279" } }, // Krasnodar: içindeki Adıge. Kaynağın deliği çizilmediği için Adıge görünmez kalırdı.
+            { "EGY-1551", new[] { "EGY-5494" } }, // Kina: içindeki Luksor
+            { "RUS-2382", new[] { "RUS+99?" } }, // Yamalo-Nenets: adsız küçük ada
+            { "RUS-2321", new string[0] }, // Çukotka: 180. boylamda kesilmiş parçalar birleşir, kesik sınır gibi çizilmez.
+            { "CYP-3489", new[] { "WSB-5133" } }, // Limasol: Akrotiri
+            { "CYP-3463", new[] { "ESB-5132" } }, // Larnaka: Dhekelia
             { "SYR-146", new[] { "SYR-145", "SYR-5261" } }, // Dera: Kuneytire, UNDOF
             { "AZE-1717", new[] { "AZE-1690", "AZE-1719" } }, // Abşeron-Hızı -> Sumgayıt
             { "AZE-1716", new[] { "AZE-1693", "AZE-1705", "AZE-1711" } }, // Dağlık Şirvan -> Şamahı
@@ -65,7 +131,11 @@ namespace GeoWar.Tools
             { "AZE-1715", new[] { "AZE-1694", "AZE-1698", "AZE-1710", "AZE-5563" } } // Şirvan-Salyan -> Salyan
         };
 
-        private static readonly string[] NameSuffixes = { " ili", " İli", " Rayonu", " Eyaleti", " İdari Bölgesi", " Özerk Cumhuriyeti" };
+        private static readonly string[] NameSuffixes =
+        {
+            " ili", " İli", " Rayonu", " Eyaleti", " İdari Bölgesi", " Özerk Cumhuriyeti",
+            " Oblastı", " Krayı", " Cumhuriyeti", " Özerk Okrugu", " eyaleti", " kazası", " valiliği", " Yönetimi", " Valiliği", " Bölgesi"
+        };
 
         private sealed class Province
         {
@@ -178,8 +248,8 @@ namespace GeoWar.Tools
                     JsonElement properties = feature.GetProperty("properties");
                     string iso = Text(properties, "iso_a2");
                     string admin = Text(properties, "admin");
-                    string countryKey = iso == "-1" || iso == "-99" || iso.Length == 0 ? admin : iso;
-                    bool isSelectable = !isRegion || countries.Contains(iso);
+                    string countryKey = CountryKey(iso, admin);
+                    bool isSelectable = !isRegion || countries.Contains(countryKey);
 
                     if (!isSelectable)
                     {
@@ -187,10 +257,11 @@ namespace GeoWar.Tools
                         continue;
                     }
 
+                    string id = iso == "TR" ? Text(properties, "iso_3166_2") : Text(properties, "adm1_code");
                     var province = new Province
                     {
-                        Id = iso == "TR" ? Text(properties, "iso_3166_2") : Text(properties, "adm1_code"),
-                        Name = CleanName(FirstText(properties, "name_tr", "name")),
+                        Id = id,
+                        Name = CleanName(id, FirstText(properties, "name_tr", "name")),
                         Country = countryKey,
                         CenterLon = properties.GetProperty("longitude").GetDouble(),
                         CenterLat = properties.GetProperty("latitude").GetDouble()
@@ -200,7 +271,7 @@ namespace GeoWar.Tools
                     double grid = isRegion ? FullDetail : CountryGrid;
                     foreach (double[][] ring in OuterRings(feature.GetProperty("geometry")))
                     {
-                        double[][] snapped = Snap(ring, grid);
+                        double[][] snapped = Snap(UnwrapEastOfDateLine(ring, countryKey), grid);
                         if (snapped.Length >= MinRingPoints)
                         {
                             province.Rings.Add(snapped);
@@ -215,6 +286,7 @@ namespace GeoWar.Tools
                 }
             }
 
+            SimplifyLargeCountries(provinces);
             MergeProvinces(provinces);
             DropPiecesInsideNeighbors(provinces);
             provinces.Sort((a, b) => string.CompareOrdinal(a.Country + a.Id, b.Country + b.Id));
@@ -225,6 +297,89 @@ namespace GeoWar.Tools
             }
 
             return provinces;
+        }
+
+        private static string CountryKey(string iso, string admin)
+        {
+            if (AdminCountries.TryGetValue(admin, out string mapped))
+            {
+                return mapped;
+            }
+
+            return iso == "-1" || iso == "-99" || iso.Length == 0 ? admin : iso;
+        }
+
+        // Kaynak dünyayı 180. boylamda keser. Rusya'nın kesiğin doğusunda kalan parçası ülkenin yanına taşınır.
+        private static double[][] UnwrapEastOfDateLine(double[][] ring, string country)
+        {
+            if (country != "RU")
+            {
+                return ring;
+            }
+
+            foreach (double[] point in ring)
+            {
+                if (point[0] >= 0)
+                {
+                    return ring;
+                }
+            }
+
+            var moved = new double[ring.Length][];
+            for (int i = 0; i < ring.Length; i++)
+            {
+                moved[i] = new[] { ring[i][0] + FullCircle, ring[i][1] };
+            }
+
+            return moved;
+        }
+
+        // Başka seçilebilir ülkeyle ortak köşeler yerinde kalır: kıpırdarsa ülke sınırı açılır ve komşuluk kaybolur.
+        private static void SimplifyLargeCountries(List<Province> provinces)
+        {
+            foreach (KeyValuePair<string, double> pair in CountryTolerances)
+            {
+                var keep = new HashSet<(double, double)>();
+                var rings = new List<double[][]>();
+                foreach (Province province in provinces)
+                {
+                    if (province.Country == pair.Key)
+                    {
+                        rings.AddRange(province.Rings);
+                        continue;
+                    }
+
+                    foreach (double[][] ring in province.Rings)
+                    {
+                        foreach (double[] point in ring)
+                        {
+                            keep.Add((point[0], point[1]));
+                        }
+                    }
+                }
+
+                double[][][] simplified = RingSimplifier.Simplify(rings, pair.Value, MapXScale, keep);
+                int next = 0;
+                foreach (Province province in provinces)
+                {
+                    if (province.Country != pair.Key)
+                    {
+                        continue;
+                    }
+
+                    var kept = new List<double[][]>(province.Rings.Count);
+                    foreach (double[][] _ in province.Rings)
+                    {
+                        double[][] ring = simplified[next++];
+                        if (ring.Length >= MinRingPoints)
+                        {
+                            kept.Add(ring);
+                        }
+                    }
+
+                    province.Rings = kept;
+                }
+            }
         }
 
         // Bir ilin aynı ülkedeki başka ilin içinde kalan parçası haritada delik gibi görünür; çevreleyen il orayı zaten kaplar.
@@ -271,15 +426,30 @@ namespace GeoWar.Tools
         private static Province BuildBackground(Dictionary<string, List<double[][]>> ringsByCountry)
         {
             var background = new Province { Id = "", Name = "", Country = "" };
+            var remote = new List<double[][]>();
             foreach (List<double[][]> rings in ringsByCountry.Values)
             {
                 foreach (double[][] ring in RingUnion.Merge(rings))
                 {
+                    if (!IsNearStart(ring))
+                    {
+                        remote.Add(ring);
+                        continue;
+                    }
+
                     double[][] snapped = Snap(ring, FarGrid);
                     if (snapped.Length >= MinRingPoints && Math.Abs(Area(snapped)) >= MinBackgroundArea)
                     {
                         background.Rings.Add(snapped);
                     }
+                }
+            }
+
+            foreach (double[][] ring in RingSimplifier.Simplify(remote, RemoteTolerance, MapXScale, null))
+            {
+                if (ring.Length >= MinRingPoints && Math.Abs(Area(ring)) >= MinRemoteArea)
+                {
+                    background.Rings.Add(ring);
                 }
             }
 
@@ -352,6 +522,19 @@ namespace GeoWar.Tools
             foreach (double[] point in ring)
             {
                 if (point[0] >= RegionMinLon && point[0] <= RegionMaxLon && point[1] >= RegionMinLat && point[1] <= RegionMaxLat)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsNearStart(double[][] ring)
+        {
+            foreach (double[] point in ring)
+            {
+                if (point[0] >= RegionMinLon && point[0] <= NearMaxLon && point[1] >= NearMinLat && point[1] <= NearMaxLat)
                 {
                     return true;
                 }
@@ -811,8 +994,13 @@ namespace GeoWar.Tools
             return (byte)index;
         }
 
-        private static string CleanName(string name)
+        private static string CleanName(string id, string name)
         {
+            if (ProvinceNames.TryGetValue(id, out string overridden))
+            {
+                return overridden;
+            }
+
             if (NameFixes.TryGetValue(name, out string fixedName))
             {
                 return fixedName;

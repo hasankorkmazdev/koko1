@@ -7,8 +7,13 @@ namespace GeoWar.Game
     // İkon yollarını ve kaynak görsellerini açılışta bir kez okur.
     public sealed class IconLibrary
     {
+        private const string BuildingImageClass = "gw-building-image";
+
+        private static readonly Color DimmedImageTint = UiColors.Hex("#7F7F7F");
+
         private readonly Dictionary<string, List<PathCommand>> _icons = new Dictionary<string, List<PathCommand>>();
         private readonly Dictionary<string, Texture2D> _resourceImages = new Dictionary<string, Texture2D>();
+        private readonly Dictionary<string, Texture2D> _buildingImages = new Dictionary<string, Texture2D>();
         private readonly Texture2D _treasuryImage;
         private readonly Texture2D _moneyImage;
         private readonly Texture2D _populationImage;
@@ -39,6 +44,15 @@ namespace GeoWar.Game
                     }
                 }
             }
+
+            foreach (BuildingViewData building in data.Buildings)
+            {
+                Texture2D image = Resources.Load<Texture2D>(data.BuildingIconFolder + "/" + building.Key);
+                if (image != null)
+                {
+                    _buildingImages.Add(building.Key, image);
+                }
+            }
         }
 
         public List<PathCommand> Get(string key)
@@ -56,6 +70,26 @@ namespace GeoWar.Game
             }
 
             return CreateImage(image);
+        }
+
+        // Görseli henüz üretilmemiş tesis, ui.json'daki vektör ikonuyla çizilir.
+        // Görsel kendi renklerini korur; kurulamayan tesiste karartılır.
+        public VisualElement CreateBuildingIcon(BuildingViewData view, Color vectorColor, float strokeWidth, bool isDimmed = false)
+        {
+            Texture2D image;
+            if (!_buildingImages.TryGetValue(view.Key, out image))
+            {
+                return new IconElement(Get(view.Icon), vectorColor, strokeWidth);
+            }
+
+            VisualElement element = CreateImage(image);
+            element.AddToClassList(BuildingImageClass);
+            if (isDimmed)
+            {
+                element.style.unityBackgroundImageTintColor = DimmedImageTint;
+            }
+
+            return element;
         }
 
         public VisualElement CreateTreasuryIcon()

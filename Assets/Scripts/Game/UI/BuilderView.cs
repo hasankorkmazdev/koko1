@@ -252,7 +252,7 @@ namespace GeoWar.Game
             Color color = block == BuildBlock.None ? UiColors.Text : LockedText;
 
             BuildingViewData view = _session.BuildingViews[building];
-            var icon = new IconElement(_session.Icons.Get(view.Icon), color, StrokeItem);
+            VisualElement icon = _session.Icons.CreateBuildingIcon(view, color, StrokeItem, block != BuildBlock.None);
             icon.AddToClassList("gw-builder-item-icon");
             item.Add(icon);
 

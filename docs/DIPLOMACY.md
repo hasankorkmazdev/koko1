@@ -1,5 +1,5 @@
 1. Ülkeler arası üç ilişki durumu vardır: barış, savaş, ittifak.
-2. Oyun başında tüm ülkeler barış durumundadır.
+2. Oyun başında ülkeler barış durumundadır. Tartışmalı toprağı olan ülke çiftleri savaşta başlar; liste veri dosyasındadır (`ui.json`, `StartingWars`).
 3. Bir ülkeye saldırmak için önce savaş ilan edilir.
 4. Savaştaki ülkeye barış teklif edilebilir; kabul ederse savaş biter.
    1. Barış yapıldıktan sonra belli bir süre (ör. 30 oyun günü) tekrar savaş ilan edilemez.

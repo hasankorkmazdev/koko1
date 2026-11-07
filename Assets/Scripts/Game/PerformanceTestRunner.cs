@@ -27,7 +27,7 @@ namespace GeoWar.Game
         private const float TestTapFraction = 0.5f;
         private const float TestScreenshotFraction = 0.9f;
 
-        private static readonly Color SeaColor = new Color32(31, 47, 51, 255);
+        private static readonly Color SeaColor = new Color32(43, 64, 69, 255);
 
         private MapData _map;
         private MapView _mapView;

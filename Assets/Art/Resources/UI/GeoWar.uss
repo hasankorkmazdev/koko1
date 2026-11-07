@@ -459,6 +459,18 @@
     font-size: 13px;
 }
 
+/* Vergi kutusu düğmedir: dokunma alanı 48 birim olsun diye satırdan taşar; taşan pay satır boşluklarına düşer. */
+.gw-stat-button {
+    min-height: 48px;
+    margin-top: -4px;
+    margin-bottom: -4px;
+    justify-content: center;
+    border-width: 1px;
+    border-color: #0A0906;
+}
+
+.gw-stat-action { margin-left: 6px; }
+
 .gw-sat-row {
     flex-direction: row;
     align-items: center;
@@ -579,6 +591,11 @@
     height: 26px;
 }
 
+.gw-tile-icon.gw-building-image {
+    width: 44px;
+    height: 44px;
+}
+
 .gw-tile-level {
     position: absolute;
     right: 0;
@@ -618,6 +635,11 @@
     height: 28px;
     flex-shrink: 0;
     margin-right: 8px;
+}
+
+.gw-detail-icon.gw-building-image {
+    width: 40px;
+    height: 40px;
 }
 
 .gw-detail-text {
@@ -908,6 +930,11 @@
     width: 26px;
     height: 26px;
     margin-bottom: 3px;
+}
+
+.gw-builder-item-icon.gw-building-image {
+    width: 40px;
+    height: 40px;
 }
 
 .gw-builder-item-name {
@@ -1267,12 +1294,37 @@
     margin-right: 6px;
 }
 
-.gw-table-name {
+/* Ad kutusu sütunun kalan yerini tutar; ad kendi genişliğindedir, uyarı hemen yanında durur. */
+.gw-table-name-box {
     flex-grow: 1;
     flex-basis: 0;
     min-width: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.gw-table-name {
+    flex-shrink: 1;
+    min-width: 0;
     font-size: 13px;
     white-space: normal;
+}
+
+/* Stoğu yakında bitecek kaynağın uyarısı. Süre MarketView.WarningPulseMs ile aynıdır. */
+.gw-table-warning {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-left: 4px;
+    margin-right: 3px;
+    transition-property: scale, opacity;
+    transition-duration: 0.6s;
+    transition-timing-function: ease-in-out;
+}
+
+.gw-table-warning-dim {
+    scale: 0.72 0.72;
+    opacity: 0.35;
 }
 
 .gw-table-value {
@@ -1405,6 +1457,77 @@
     font-size: 13px;
 }
 
+/* Vergi penceresi: il panelinin üstünde, alt şeridin hemen üzerinde durur; yüksekliği içeriğinden gelir. */
+.gw-tax {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 66px;
+    flex-direction: column;
+    border-width: 2px;
+    border-color: #A88A3A;
+}
+
+.gw-tax-body {
+    padding: 8px 10px 10px 10px;
+    flex-shrink: 0;
+}
+
+.gw-tax-schedule { margin-bottom: 6px; }
+
+.gw-tax-stepper {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.gw-tax-step {
+    width: 72px;
+    height: 48px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-width: 1px;
+    border-color: #0A0906;
+    font-size: 24px;
+}
+
+.gw-tax-rate {
+    flex-grow: 1;
+    -unity-text-align: middle-center;
+    font-size: 28px;
+}
+
+.gw-tax-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 28px;
+    margin-bottom: 2px;
+    padding: 3px 7px;
+    background-color: #14130C;
+    font-size: 13px;
+}
+
+.gw-tax-row-caption {
+    flex-grow: 1;
+    font-size: 12px;
+}
+
+.gw-tax-note {
+    margin-top: 4px;
+    color: #CFAB52;
+}
+
+.gw-tax-all {
+    height: 48px;
+    margin-top: 6px;
+    align-items: center;
+    justify-content: center;
+    border-width: 1px;
+    border-color: #4E3F12;
+    font-size: 14px;
+}
+
 /* Harita etiketleri: çapa noktaya ortalanmış görünmez bir kutudur, içindeki yazı kutunun ortasında durur. */
 .gw-anchor {
     position: absolute;
@@ -1481,13 +1604,14 @@
     border-color: #111111;
 }
 
-.gw-token-capital { background-color: #CFAB52; }
 .gw-token-alarm { background-color: #D9652F; }
 .gw-token-rebel { background-color: #C9362B; }
 
-.gw-token-icon {
-    width: 13px;
-    height: 13px;
+.gw-capital-star {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    opacity: 0.75;
 }
 
 .gw-token-text {

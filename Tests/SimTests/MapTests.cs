@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using GeoWar.Game;
 using GeoWar.Map;
+using GeoWar.Tools;
 
 namespace GeoWar.Tests
 {
@@ -13,12 +14,14 @@ namespace GeoWar.Tests
         private const float LonScale = 30f;
         private const float LatScale = 38.6f;
         private const int AzerbaijanRegions = 14;
+        private const int RussianRegions = 84;
 
         public static void Run(Action<string, bool> check)
         {
             ConcavePolygonIsCoveredExactly(check);
             RingUnionKeepsOnlyTheOuterBorder(check);
             LandBeyondAnEdgeIsNotSea(check);
+            SimplifiedNeighborsKeepTheirSharedBorder(check);
             RegionFileFindsKnownPlaces(check);
         }
 
@@ -66,6 +69,47 @@ namespace GeoWar.Tests
             check("kıyı: dışarıda kara yoksa denizdir", !probe.HasLandBeyond(2, 3, 0, distance));
             check("kıyı: seçilebilir ilin karşı kıyısı denizdir", !probe.HasLandBeyond(3, 0, 0, distance));
             check("kıyı: arka plan kenarı da ilin yanında sınırdır", probe.HasLandBeyond(7, 4, 1, distance));
+        }
+
+        private static void SimplifiedNeighborsKeepTheirSharedBorder(Action<string, bool> check)
+        {
+            // İki dikdörtgen, ortak kenarı hafif dalgalı. Dış kenardaki ara köşeler de gereksiz.
+            double[][] border = { new[] { 2.0, 0.0 }, new[] { 2.001, 1.0 }, new[] { 2.0, 2.0 }, new[] { 2.5, 3.0 }, new[] { 2.0, 4.0 } };
+            double[][] left =
+            {
+                new[] { 0.0, 0.0 }, border[0], border[1], border[2], border[3], border[4], new[] { 0.0, 4.0 }, new[] { 0.0, 2.0 }
+            };
+            double[][] right =
+            {
+                border[0], new[] { 4.0, 0.0 }, new[] { 4.0, 4.0 }, border[4], border[3], border[2], border[1]
+            };
+
+            double[][][] result = RingSimplifier.Simplify(new[] { left, right }, 0.1, 1, null);
+            var leftPoints = new HashSet<(double, double)>();
+            foreach (double[] point in result[0])
+            {
+                leftPoints.Add((point[0], point[1]));
+            }
+
+            int sharedInRight = 0;
+            foreach (double[] point in result[1])
+            {
+                sharedInRight += leftPoints.Contains((point[0], point[1])) ? 1 : 0;
+            }
+
+            check("sadeleşme: küçük sapma atılır", !leftPoints.Contains((2.001, 1.0)));
+            check("sadeleşme: büyük sapma kalır", leftPoints.Contains((2.5, 3.0)));
+            check("sadeleşme: gereksiz dış köşe atılır", !leftPoints.Contains((0.0, 2.0)));
+            check("sadeleşme: iki komşu aynı köşeleri alır", sharedInRight == 4);
+
+            var pinned = new HashSet<(double, double)> { (2.001, 1.0) };
+            double[][][] kept = RingSimplifier.Simplify(new[] { left, right }, 0.1, 1, pinned);
+            bool pinnedInBoth = Array.Exists(kept[0], point => point[0] == 2.001) && Array.Exists(kept[1], point => point[0] == 2.001);
+            check("sadeleşme: başka ülkeyle ortak köşe yerinde kalır", pinnedInBoth);
+
+            double[][] island = { new[] { 0.0, 0.0 }, new[] { 2.0, 0.001 }, new[] { 4.0, 0.0 }, new[] { 4.0, 4.0 }, new[] { 0.0, 4.0 } };
+            double[][] alone = RingSimplifier.Simplify(new[] { island }, 0.1, 1, null)[0];
+            check("sadeleşme: ada halka olarak kalır", alone.Length == 4 && Math.Abs(Area(alone) - 16) < 1e-9);
         }
 
         private static double[][] Square(double x, double y, double size)
@@ -134,6 +178,8 @@ namespace GeoWar.Tests
             check("harita: Karadeniz boş", MapHitTest.FindProvince(map, 35f * LonScale, 43f * LatScale) == MapHitTest.NotFound);
             check("harita: arka plan seçilmez", MapHitTest.FindProvince(map, 10f * LonScale, 50f * LatScale) == MapHitTest.NotFound);
             CapitalsBelongToTheirCountries(check, map);
+            StartingWarsNameRealCountries(check, map);
+            NewCountriesArePlacedRight(check, map);
             CountryBordersComeFromTheMap(check, map);
             CityNeighborsComeFromTheMap(check, map);
             check("harita: kıyı kenarları var", map.CoastLines.Length > 0 && map.CoastLines.Length % 2 == 0);
@@ -141,6 +187,98 @@ namespace GeoWar.Tests
             SlicesJoinTheirNeighbors(check, map);
             EveryCityTouchesANeighborOrTheSea(check, map);
             OnlyRealCoastsCount(check, map);
+        }
+
+        private static void NewCountriesArePlacedRight(Action<string, bool> check, MapData map)
+        {
+            check("harita: Moskova bulunur", CountryAt(map, 37.62f, 55.75f) == "RU" && NameAt(map, 37.62f, 55.75f) == "Moskova");
+            check("harita: Kahire bulunur", CountryAt(map, 31.3f, 30.05f) == "EG");
+            check("harita: Riyad bulunur", NameAt(map, 46.7f, 24.7f) == "Riyad");
+            check("harita: Amman bulunur", NameAt(map, 35.93f, 31.95f) == "Amman");
+            check("harita: Tel Aviv bulunur", NameAt(map, 34.8f, 32.08f) == "Tel Aviv");
+            check("harita: Gazze Filistin'de", CountryAt(map, 34.45f, 31.5f) == "PS");
+            check("harita: Ramallah Filistin'de", CountryAt(map, 35.2f, 31.9f) == "PS");
+            check("harita: Lefkoşa'nın güneyi Kıbrıs'ta", CountryAt(map, 33.365f, 35.16f) == "CY");
+            check("harita: Lefkoşa'nın kuzeyi KKTC'de", CountryAt(map, 33.365f, 35.195f) == "KKTC");
+            check("harita: Akrotiri Limasol'da", NameAt(map, 32.97f, 34.6f) == "Limasol");
+            check("harita: Dhekelia Larnaka'da", NameAt(map, 33.75f, 35.0f) == "Larnaka");
+            check("harita: Adıge Krasnodar'da", NameAt(map, 40.1f, 44.6f) == "Krasnodar");
+            check("harita: Luksor Kina'da", NameAt(map, 32.65f, 25.7f) == "Kina");
+            check("harita: Kırım Rusya'da", NameAt(map, 34.1f, 44.95f) == "Kırım");
+            check("harita: Beyrut bulunur", NameAt(map, 35.5f, 33.89f) == "Beyrut");
+            check("harita: Trablus Kuzey Lübnan'da", NameAt(map, 35.84f, 34.43f) == "Kuzey Lübnan");
+            check("harita: Baalbek Bekaa'da", NameAt(map, 36.2f, 34.0f) == "Bekaa");
+            check("harita: Golan İsrail'de", CountryAt(map, 35.69f, 32.99f) == "IL");
+            check("harita: Doğu Kudüs İsrail'de", NameAt(map, 35.234f, 31.776f) == "Kudüs");
+
+            // Çukotka 180. boylamı geçer: doğu ucu haritanın sağında kalmalı, solda iz bırakmamalı.
+            check("harita: Çukotka'nın doğu ucu bulunur", NameAt(map, 187f, 66f) == "Çukotka");
+            check("harita: Çukotka'nın batısı bulunur", NameAt(map, 175f, 66f) == "Çukotka");
+            check("harita: kesik sağa taşındı", MapHitTest.FindProvince(map, -173f * LonScale, 66f * LatScale) == MapHitTest.NotFound);
+            check("harita: Çukotka'da kesik kalmadı", MinX(map) > 0);
+            check("harita: Rus ili kayıp değil", CountProvinces(map, "RU") == RussianRegions);
+
+            var names = new HashSet<string>();
+            int cities = CityCount(map);
+            for (int city = 0; city < cities; city++)
+            {
+                names.Add(map.ProvinceNames[city]);
+            }
+
+            check("harita: il adları tekrar etmez", names.Count == cities);
+        }
+
+        private static float MinX(MapData map)
+        {
+            float min = float.MaxValue;
+            for (int province = 0; province < map.ProvinceCount; province++)
+            {
+                if (map.ProvinceCountry[province] != MapData.NoCountry)
+                {
+                    min = Math.Min(min, map.MinX[province]);
+                }
+            }
+
+            return min;
+        }
+
+        private static string CountryAt(MapData map, float lon, float lat)
+        {
+            int province = MapHitTest.FindProvince(map, lon * LonScale, lat * LatScale);
+            return province == MapHitTest.NotFound ? "" : map.Countries[map.ProvinceCountry[province]];
+        }
+
+        private static void StartingWarsNameRealCountries(Action<string, bool> check, MapData map)
+        {
+            UiData ui = LoadUi();
+            bool valid = true;
+            bool israelPalestine = false;
+            bool israelSyria = false;
+            bool israelLebanon = false;
+            foreach (CountryPairData war in ui.StartingWars)
+            {
+                valid &= war.A != war.B && Array.IndexOf(map.Countries, war.A) >= 0 && Array.IndexOf(map.Countries, war.B) >= 0;
+                israelPalestine |= war.A == "IL" && war.B == "PS";
+                israelSyria |= war.A == "IL" && war.B == "SY";
+                israelLebanon |= war.A == "IL" && war.B == "LB";
+            }
+
+            check("savaş: çiftler haritadaki ülkeler", valid);
+            check("savaş: İsrail ile Filistin savaşta başlar", israelPalestine);
+            check("savaş: İsrail ile Suriye savaşta başlar", israelSyria);
+            check("savaş: İsrail ile Lübnan savaşta başlar", israelLebanon);
+        }
+
+        private static UiData LoadUi()
+        {
+            string directory = AppContext.BaseDirectory;
+            while (!File.Exists(Path.Combine(directory, UiFile)))
+            {
+                directory = Path.GetDirectoryName(directory);
+            }
+
+            string json = File.ReadAllText(Path.Combine(directory, UiFile));
+            return System.Text.Json.JsonSerializer.Deserialize<UiData>(json, new System.Text.Json.JsonSerializerOptions { IncludeFields = true });
         }
 
         private static void SlicesJoinTheirNeighbors(Action<string, bool> check, MapData map)
@@ -228,7 +366,10 @@ namespace GeoWar.Tests
                 { "GE", new[] { "Abhazya", "Acara", "Guria", "Samegrelo-Zemo Svaneti" } },
                 { "IR", new[] { "Buşehr", "Gülistan", "Mazenderan", "Huzistan", "Hürmüzgan", "Gilan", "Sistan ve Belucistan" } },
                 { "AZ", new[] { "Bakü", "Sumgayıt", "Lenkeran", "Salyan", "Haçmaz" } },
-                { "AM", new string[0] }
+                { "AM", new string[0] },
+                { "JO", new[] { "Akabe" } },
+                { "PS", new[] { "Gazze" } },
+                { "LB", new[] { "Beyrut", "Cebel-i Lübnan", "Kuzey Lübnan", "Güney Lübnan" } }
             };
 
             foreach (KeyValuePair<string, string[]> pair in expected)
@@ -294,12 +435,21 @@ namespace GeoWar.Tests
                 { "TR", new[] { "GR", "BG", "GE", "AM", "AZ", "IR", "IQ", "SY" } },
                 { "GR", new[] { "BG", "TR" } },
                 { "BG", new[] { "GR", "TR" } },
-                { "GE", new[] { "TR", "AM", "AZ" } },
+                { "GE", new[] { "TR", "AM", "AZ", "RU" } },
                 { "AM", new[] { "TR", "GE", "AZ", "IR" } },
-                { "AZ", new[] { "TR", "GE", "AM", "IR" } },
+                { "AZ", new[] { "TR", "GE", "AM", "IR", "RU" } },
                 { "IR", new[] { "TR", "AM", "AZ", "IQ" } },
-                { "IQ", new[] { "TR", "IR", "SY" } },
-                { "SY", new[] { "TR", "IQ" } }
+                { "IQ", new[] { "TR", "IR", "SY", "JO", "SA" } },
+                { "SY", new[] { "TR", "IQ", "JO", "IL", "LB" } },
+                { "RU", new[] { "GE", "AZ" } },
+                { "CY", new[] { "KKTC" } },
+                { "KKTC", new[] { "CY" } },
+                { "EG", new[] { "IL", "PS" } },
+                { "IL", new[] { "EG", "JO", "PS", "SY", "LB" } },
+                { "LB", new[] { "IL", "SY" } },
+                { "PS", new[] { "EG", "IL", "JO" } },
+                { "JO", new[] { "IL", "PS", "SY", "IQ", "SA" } },
+                { "SA", new[] { "JO", "IQ" } }
             };
 
             int count = map.Countries.Length;
@@ -360,8 +510,8 @@ namespace GeoWar.Tests
             int cityCount = CityCount(map);
             MapRoutes.CityNeighbors(map, cityCount, out int[] start, out int[] cities);
 
-            // Karayla bağı olmayan iller yalnızca Yunanistan'ın ada bölgeleridir.
-            string[] islands = { "GRC-2883", "GRC-2988", "GRC-2990", "GRC-3013" };
+            // Karayla bağı olmayan iller: Yunanistan'ın ada bölgeleri, Sahalin ve oyundaki hiçbir ülkeye değmeyen Kaliningrad.
+            string[] islands = { "GRC-2883", "GRC-2988", "GRC-2990", "GRC-3013", "RUS-2616", "RUS-2324" };
             bool citiesComeFirst = true;
             bool everyCityHasNeighbor = true;
             bool symmetric = true;
@@ -396,14 +546,7 @@ namespace GeoWar.Tests
         // Haritadaki her ülkenin başkenti verilmiş olmalı ve o ülkenin bir ili olmalı.
         private static void CapitalsBelongToTheirCountries(Action<string, bool> check, MapData map)
         {
-            string directory = AppContext.BaseDirectory;
-            while (!File.Exists(Path.Combine(directory, UiFile)))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            string json = File.ReadAllText(Path.Combine(directory, UiFile));
-            UiData ui = System.Text.Json.JsonSerializer.Deserialize<UiData>(json, new System.Text.Json.JsonSerializerOptions { IncludeFields = true });
+            UiData ui = LoadUi();
 
             foreach (string countryKey in map.Countries)
             {

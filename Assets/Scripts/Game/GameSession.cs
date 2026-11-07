@@ -36,6 +36,9 @@ namespace GeoWar.Game
         public readonly bool[] ProvinceReady;
         public readonly bool[] ProvinceRebellion;
 
+        // Oyuncunun şehirlerinin huzursuzluk düzeyi; harita bu düzeye göre kırmızıya boyar. Başka ülkelerin ilinde sıfırdır.
+        public readonly int[] ProvinceUnrest;
+
         // Oyuncunun isyan eden şehirleri, süresi en az kalandan başlayarak.
         public readonly List<int> RebellionCities = new List<int>();
         public readonly BuildingViewData[] BuildingViews;
@@ -47,8 +50,8 @@ namespace GeoWar.Game
         private readonly string[] _countryTitles;
         private readonly string[] _transportNames;
         private long _moneyAtDayStart;
+        private readonly RebellionAlerts _rebellionAlerts = new RebellionAlerts();
         private int _seenOwnersVersion;
-        private int _seenRebellions;
         private int _seenLostCities;
         private bool _ownersChanged;
 
@@ -84,6 +87,7 @@ namespace GeoWar.Game
             ProvinceAlarm = new bool[map.ProvinceCount];
             ProvinceReady = new bool[map.ProvinceCount];
             ProvinceRebellion = new bool[map.ProvinceCount];
+            ProvinceUnrest = new int[map.ProvinceCount];
             BuildingViews = MapBuildingViews(definition, ui);
             ResourceViews = MapResourceViews(definition, ui);
             Bar = new ResourceBar(MapStartBar(definition, ui));
@@ -110,6 +114,7 @@ namespace GeoWar.Game
             ApplyBordersAndWars();
 
             _startDate = new DateTime(ui.StartYear, ui.StartMonth, ui.StartDay);
+            World.StartDate = _startDate;
             _moneyAtDayStart = World.Money[Player];
             _clock = new SimulationClock(definition.Balance.SecondsPerDay) { Speed = 1 };
             RefreshDerived();
@@ -237,20 +242,13 @@ namespace GeoWar.Game
 
         public bool IsCapital(int province)
         {
-            CountryViewData country = CountryView(province);
-            return country != null && country.Capital == Map.ProvinceIds[province];
+            return World.CountryCapital[ProvinceOwner[province]] == province;
         }
 
         public string CapitalName(int country)
         {
-            if (Rebellions.IsRebelState(World, country))
-            {
-                return Map.ProvinceNames[World.RebelCapital[country]];
-            }
-
-            CountryViewData view = CountryViewAt(country);
-            int capital = view != null ? Array.IndexOf(Map.ProvinceIds, view.Capital) : -1;
-            return capital >= 0 ? Map.ProvinceNames[capital] : "";
+            int capital = World.CountryCapital[country];
+            return capital != WorldState.NoCity ? Map.ProvinceNames[capital] : "";
         }
 
         // İttifak şimdilik yalnızca oyuncuyla kurulur: oyuncunun müttefikleri veya müttefikse oyuncu.
@@ -291,6 +289,17 @@ namespace GeoWar.Game
             return started;
         }
 
+        public bool SetCityTax(int city, int percent)
+        {
+            return IsOwnProvince(city) && TaxCommands.TrySetCity(Definition, World, Player, city, percent);
+        }
+
+        // Oranı değişen şehir sayısını döndürür.
+        public int SetAllTaxes(int percent)
+        {
+            return TaxCommands.SetAll(Definition, World, Player, percent);
+        }
+
         // Tek şehre veya tüm isyanlara cevap verir. Cevap verilen şehir sayısını döndürür.
         public int AnswerRebellion(int city, RebellionResponse response)
         {
@@ -314,12 +323,16 @@ namespace GeoWar.Game
             return changed;
         }
 
-        public bool TakeNewRebellion()
+        // Gün sonunda sorulur: isyan penceresi kendiliğinden açılmalı mı?
+        public bool TakeRebellionAlert()
         {
-            int started = World.CountryRebellionsStarted[Player];
-            bool isNew = started != _seenRebellions;
-            _seenRebellions = started;
-            return isNew;
+            return _rebellionAlerts.ShouldOpen(Definition, World, Player);
+        }
+
+        // Kaybedilen şehir oyunu durdurmaz; pencere bir sonraki açılışında yazar.
+        public bool HasUnreadLosses
+        {
+            get { return World.CountryCitiesLost[Player] != _seenLostCities; }
         }
 
         // Son sorudan beri isyanla kaybedilen şehir sayısı.
@@ -484,6 +497,14 @@ namespace GeoWar.Game
                 ProvinceRebellion[city] = true;
             }
 
+            Array.Clear(ProvinceUnrest, 0, ProvinceUnrest.Length);
+            int cityEnd = World.CountryCityStart[Player + 1];
+            for (int i = World.CountryCityStart[Player]; i < cityEnd; i++)
+            {
+                int city = World.CountryCities[i];
+                ProvinceUnrest[city] = UnrestLevel.Of(Definition.Balance, World, city);
+            }
+
             int alarms = 0;
             int ready = 0;
             int end = World.CountryFacilityStart[Player + 1];
@@ -508,7 +529,7 @@ namespace GeoWar.Game
             ReadyProvinceCount = ready;
         }
 
-        // Ülke adları ve yol ücretinin dayandığı başkentler arası mesafe veri dosyasından gelir.
+        // Ülke adları, başkentler ve yol ücretinin dayandığı başkentler arası mesafe veri dosyasından gelir.
         private void ApplyCapitals()
         {
             int count = Map.Countries.Length;
@@ -528,6 +549,7 @@ namespace GeoWar.Game
                     int capital = Array.IndexOf(Map.ProvinceIds, view.Capital);
                     if (capital >= 0)
                     {
+                        World.CountryCapital[country] = capital;
                         lat[country] = Map.CenterY[capital] / MapLayout.LatScale;
                         lon[country] = Map.CenterX[capital] / MapLayout.LonScale;
                     }
@@ -547,7 +569,7 @@ namespace GeoWar.Game
             World.AirPathCrossings = MapRoutes.AirPathCrossings(Map, capitalX, capitalY, World.CountryCount);
         }
 
-        // Şehir komşulukları ve kara sınırları haritadan gelir. Örnek dünyanın komşuluğu silinir, oyuncunun savaşları veri dosyasından yazılır.
+        // Şehir komşulukları ve kara sınırları haritadan gelir. Örnek dünyanın komşuluğu silinir, savaşlar veri dosyasından yazılır.
         private void ApplyBordersAndWars()
         {
             MapRoutes.CityNeighbors(Map, World.CityCount, out int[] start, out int[] neighbors);
@@ -559,6 +581,11 @@ namespace GeoWar.Game
                 {
                     CountryRoutes.SetWar(World, Player, country, true);
                 }
+            }
+
+            foreach (CountryPairData war in Ui.StartingWars)
+            {
+                CountryRoutes.SetWar(World, Array.IndexOf(Map.Countries, war.A), Array.IndexOf(Map.Countries, war.B), true);
             }
 
             World.RoutesDirty = true;

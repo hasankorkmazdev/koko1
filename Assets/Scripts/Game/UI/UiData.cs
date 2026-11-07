@@ -17,16 +17,21 @@ namespace GeoWar.Game
         public string PopulationIcon;
         public string SatisfactionHighIcon;
         public string SatisfactionLowIcon;
+        public string BuildingIconFolder;
         public List<IconData> Icons;
         public List<ResourceGroupData> ResourceGroups;
         public List<TabViewData> Tabs;
         public List<string> BuildMaterials;
         public List<int> MarketAmounts;
+        public int MarketWarningDays;
         public List<TransportViewData> Transports;
         public List<BuildingViewData> Buildings;
         public List<ResourceViewData> Resources;
         public List<string> StartBar;
         public List<CountryViewData> Countries;
+
+        // Sınır anlaşmazlığı olan ülke çiftleri oyuna savaşta başlar.
+        public List<CountryPairData> StartingWars;
         public List<SeaLabelData> SeaLabels;
         public List<FlagData> Flags;
 
@@ -100,6 +105,13 @@ namespace GeoWar.Game
         public string Relation;
         public string Capital;
         public int Score;
+    }
+
+    [Serializable]
+    public sealed class CountryPairData
+    {
+        public string A;
+        public string B;
     }
 
     [Serializable]

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using GeoWar.Map;
+using GeoWar.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -23,13 +24,15 @@ namespace GeoWar.Game
 
         private const int GridStepDegrees = 5;
         private const int GridMinLon = 0;
-        private const int GridMaxLon = 75;
+        private const int GridMaxLon = 195;
         private const int GridMinLat = 5;
-        private const int GridMaxLat = 70;
+        private const int GridMaxLat = 85;
 
         private MapData _map;
         private CountryRelation[] _relations;
         private int[] _provinceOwner;
+        private int[] _provinceUnrest;
+        private int[] _paintedUnrest;
         private Mesh _fillMesh;
         private Mesh _selectionMesh;
         private MeshFilter _provinceLines;
@@ -45,14 +48,16 @@ namespace GeoWar.Game
 
         public void Build(MapData map, CountryRelation[] relations)
         {
-            Build(map, relations, GameSession.StartingOwners(map));
+            Build(map, relations, GameSession.StartingOwners(map), new int[map.ProvinceCount]);
         }
 
-        public void Build(MapData map, CountryRelation[] relations, int[] provinceOwner)
+        public void Build(MapData map, CountryRelation[] relations, int[] provinceOwner, int[] provinceUnrest)
         {
             _map = map;
             _relations = relations;
             _provinceOwner = provinceOwner;
+            _provinceUnrest = provinceUnrest;
+            _paintedUnrest = (int[])provinceUnrest.Clone();
             ApplyLineScale();
 
             var fillMaterial = new Material(Resources.Load<Shader>(FillShaderName));
@@ -107,6 +112,7 @@ namespace GeoWar.Game
         {
             _baseColors = BuildProvinceColors(_relations, _baseColors.Length);
             System.Array.Copy(_baseColors, _colors, _colors.Length);
+            System.Array.Copy(_provinceUnrest, _paintedUnrest, _paintedUnrest.Length);
             if (_selectedProvince != MapHitTest.NotFound)
             {
                 PaintSelected(_selectedProvince);
@@ -119,6 +125,43 @@ namespace GeoWar.Game
             Mesh oldLines = _provinceLines.sharedMesh;
             _provinceLines.sharedMesh = BuildProvinceLines(_relations).Build(ProvinceLinesName);
             Destroy(oldLines);
+        }
+
+        // Gün bitince ve isyana cevap verilince çağrılır: huzursuzluk kademesi değişen şehirler boyanır. Değişen yoksa renkler gönderilmez.
+        public void RefreshUnrest()
+        {
+            bool isChanged = false;
+            for (int province = 0; province < _paintedUnrest.Length; province++)
+            {
+                if (_paintedUnrest[province] == _provinceUnrest[province])
+                {
+                    continue;
+                }
+
+                _paintedUnrest[province] = _provinceUnrest[province];
+                PaintBase(province, ProvinceColor(_relations, province));
+                isChanged = true;
+            }
+
+            if (isChanged)
+            {
+                _fillMesh.colors32 = _colors;
+            }
+        }
+
+        private void PaintBase(int province, Color32 color)
+        {
+            int start = _map.VertexStart[province];
+            int count = _map.VertexStart[province + 1] - start;
+            for (int vertex = start; vertex < start + count; vertex++)
+            {
+                _baseColors[vertex] = color;
+            }
+
+            if (province != _selectedProvince)
+            {
+                System.Array.Copy(_baseColors, start, _colors, start, count);
+            }
         }
 
         private void PaintSelected(int province)
@@ -234,10 +277,7 @@ namespace GeoWar.Game
             var colors = new Color32[vertexCount];
             for (int province = 0; province < _map.ProvinceCount; province++)
             {
-                int country = _provinceOwner[province];
-                Color32 color = country == MapData.NoCountry
-                    ? MapPalette.Land
-                    : MapPalette.Fill(relations[country], _map.ProvinceTone[province]);
+                Color32 color = ProvinceColor(relations, province);
 
                 int end = _map.VertexStart[province + 1];
                 for (int vertex = _map.VertexStart[province]; vertex < end; vertex++)
@@ -247,6 +287,20 @@ namespace GeoWar.Game
             }
 
             return colors;
+        }
+
+        private Color32 ProvinceColor(CountryRelation[] relations, int province)
+        {
+            int country = _provinceOwner[province];
+            if (country == MapData.NoCountry)
+            {
+                return MapPalette.Land;
+            }
+
+            int tone = _map.ProvinceTone[province];
+            return relations[country] == CountryRelation.Own
+                ? MapPalette.OwnFill(tone, _provinceUnrest[province], UnrestLevel.Max)
+                : MapPalette.Fill(relations[country], tone);
         }
 
         private LineMeshBuilder BuildGrid()

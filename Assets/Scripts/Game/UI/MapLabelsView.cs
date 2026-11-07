@@ -34,7 +34,7 @@ namespace GeoWar.Game
         private sealed class CapitalToken
         {
             public VisualElement Anchor;
-            public int Province;
+            public int Country;
         }
 
         private readonly MapData _map;
@@ -193,7 +193,7 @@ namespace GeoWar.Game
             WorldState world = _session.World;
             for (int country = world.BaseCountryCount; country < world.CountryCount; country++)
             {
-                int capital = world.RebelCapital[country];
+                int capital = world.CountryCapital[country];
                 if (capital != WorldState.NoCity && !_rebelLabeled[country])
                 {
                     _rebelLabeled[country] = true;
@@ -204,24 +204,16 @@ namespace GeoWar.Game
             UpdatePositions(center, zoom);
         }
 
-        // Her ülkenin başkenti aynı altın yıldızla işaretlenir.
+        // Oyuna başlayan her ülkenin başkenti kutusuz, soluk sarı bir yıldızla işaretlenir; başkent değişince yıldız da taşınır.
         private void BuildCapitals()
         {
-            foreach (CountryViewData country in _session.Ui.Countries)
+            for (int country = 0; country < _session.World.BaseCountryCount; country++)
             {
-                int province = System.Array.IndexOf(_map.ProvinceIds, country.Capital);
-                if (province < 0)
-                {
-                    continue;
-                }
-
                 VisualElement anchor = MakeAnchor();
-                VisualElement token = UiBuilder.Box(anchor, "gw-token", "gw-token-capital");
-                token.pickingMode = PickingMode.Ignore;
-                var icon = new IconElement(_session.Icons.Get("star"), UiColors.DarkText, 0f, true);
-                icon.AddToClassList("gw-token-icon");
-                token.Add(icon);
-                _capitals.Add(new CapitalToken { Anchor = anchor, Province = province });
+                var star = new IconElement(_session.Icons.Get("star"), UiColors.CapitalStar, 0f, true);
+                star.AddToClassList("gw-capital-star");
+                anchor.Add(star);
+                _capitals.Add(new CapitalToken { Anchor = anchor, Country = country });
             }
         }
 
@@ -316,10 +308,13 @@ namespace GeoWar.Game
         {
             foreach (CapitalToken capital in _capitals)
             {
-                MoveTo(
-                    capital.Anchor,
-                    _map.CenterX[capital.Province] * zoom + offsetX,
-                    offsetY - _map.CenterY[capital.Province] * zoom - TokenOffsetY);
+                int province = _session.World.CountryCapital[capital.Country];
+                bool hasCapital = province != WorldState.NoCity;
+                capital.Anchor.style.display = hasCapital ? DisplayStyle.Flex : DisplayStyle.None;
+                if (hasCapital)
+                {
+                    MoveTo(capital.Anchor, _map.CenterX[province] * zoom + offsetX, offsetY - _map.CenterY[province] * zoom - TokenOffsetY);
+                }
             }
 
             for (int province = 0; province < _alarmTokens.Length; province++)

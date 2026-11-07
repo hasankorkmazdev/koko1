@@ -20,8 +20,8 @@ namespace GeoWar.Game
         // Boş ekranda ülke merkezinin duracağı tasarım yüksekliği.
         public const float OpenFocusY = 440f;
 
-        // Haritanın kaydırılabildiği alan, harita biriminde.
-        public static readonly Rect PanBounds = Rect.MinMaxRect(450f, 771.6f, 1800f, 2161.6f);
+        // Haritanın kaydırılabildiği alan, harita biriminde: boylam 15-192 (Çukotka 191'e uzanır), enlem 14-84.
+        public static readonly Rect PanBounds = Rect.MinMaxRect(450f, 540.4f, 5760f, 3242.4f);
 
         public static float UiScale
         {

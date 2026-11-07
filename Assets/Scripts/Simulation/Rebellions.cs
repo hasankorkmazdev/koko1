@@ -32,6 +32,7 @@ namespace GeoWar.Simulation
             {
                 CityOwnership.RebuildCountryLists(world);
                 CityOwnership.RebuildLandNeighbors(world);
+                CityOwnership.RefreshCapitals(world);
                 world.OwnersVersion++;
             }
         }
@@ -246,6 +247,7 @@ namespace GeoWar.Simulation
 
             MoveShareOfCountry(world, parent, rebel, city);
             world.CityOwner[city] = rebel;
+            TaxCommands.CancelDecision(world, city);
             world.CityConcessionDays[city] = 0;
             world.CityStopDays[city] = balance.HandoverStopDays;
             world.Satisfaction[city] = Math.Min(world.Satisfaction[city], balance.HandoverSatisfactionPermille);
@@ -289,8 +291,7 @@ namespace GeoWar.Simulation
 
                 world.RebelParent[slot] = parent;
                 world.RebelStateOf[parent] = slot;
-                world.RebelCapital[slot] = city;
-                world.TaxPercent[slot] = world.TaxPercent[parent];
+                world.CountryCapital[slot] = city;
                 world.GridLossPermille[slot] = world.GridLossPermille[parent];
                 CountryDistances.CopyForRebelState(world, parent, slot);
                 CountryRoutes.CopyAirPaths(world, parent, slot);

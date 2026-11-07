@@ -20,7 +20,7 @@ namespace GeoWar.Game
         public const float GridWidth = 1f;
         public const float SelectedLineWidth = 2.5f;
 
-        public static readonly Color32 Sea = new Color32(0x1F, 0x2F, 0x33, 255);
+        public static readonly Color32 Sea = new Color32(0x2B, 0x40, 0x45, 255);
         public static readonly Color32 Land = new Color32(0x4E, 0x4A, 0x38, 255);
         public static readonly Color32 CoastGlow = new Color32(0x3F, 0x5A, 0x5C, 255);
         public static readonly Color32 Grid = new Color32(255, 255, 255, 13);
@@ -54,6 +54,19 @@ namespace GeoWar.Game
             new Color32(0x7E, 0x32, 0x26, 255)
         };
 
+        // Huzursuz şehrin döndüğü kırmızılar. Düşman renginden parlaktır: şehir hâlâ oyuncunundur.
+        private static readonly Color32[] UnrestTones =
+        {
+            new Color32(0xC9, 0x36, 0x2B, 255),
+            new Color32(0xB9, 0x30, 0x26, 255),
+            new Color32(0xD4, 0x44, 0x3A, 255),
+            new Color32(0xA9, 0x2A, 0x21, 255)
+        };
+
+        private static readonly Color32 UnrestPale = new Color32(0xD8, 0xB0, 0xA8, 255);
+        private const float UnrestPaleMix = 0.6f;
+        private const float UnrestPaleLevel = 0.2f;
+
         private static readonly Color32 OwnLine = new Color32(0x14, 0x23, 0x2E, 255);
         private static readonly Color32 PeaceLine = new Color32(0x7B, 0x75, 0x60, 255);
         private static readonly Color32 AllyLine = new Color32(0x3E, 0x52, 0x28, 255);
@@ -66,6 +79,18 @@ namespace GeoWar.Game
                 : relation == CountryRelation.War ? WarTones
                 : PeaceTones;
             return tones[tone % tones.Length];
+        }
+
+        // Oyuncunun şehri huzursuzluk arttıkça önce açık kırmızıya, sonra koyulaşarak kırmızıya kayar.
+        // Doğrudan geçiş mavi ile kırmızının arasında mora düşer; ara durak bu yüzden vardır.
+        public static Color32 OwnFill(int tone, int unrest, int maxUnrest)
+        {
+            float level = (float)unrest / maxUnrest;
+            Color32 red = UnrestTones[tone % UnrestTones.Length];
+            Color32 pale = Color32.Lerp(red, UnrestPale, UnrestPaleMix);
+            return level < UnrestPaleLevel
+                ? Color32.Lerp(Fill(CountryRelation.Own, tone), pale, level / UnrestPaleLevel)
+                : Color32.Lerp(pale, red, (level - UnrestPaleLevel) / (1f - UnrestPaleLevel));
         }
 
         public static Color32 ProvinceLine(CountryRelation relation)

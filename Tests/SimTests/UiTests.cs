@@ -129,6 +129,11 @@ namespace GeoWar.Tests
             check("arayüz: ikon görseli kendi grubunun kaynağıdır", data.ResourceGroups.All(group =>
                 Directory.GetFiles(Path.Combine(ArtResourcesRoot, group.IconFolder), "*.png")
                     .All(file => group.Keys.Contains(Path.GetFileNameWithoutExtension(file)))));
+            check("arayüz: tesis görseli klasörü var", !string.IsNullOrEmpty(data.BuildingIconFolder)
+                && Directory.Exists(Path.Combine(ArtResourcesRoot, data.BuildingIconFolder)));
+            check("arayüz: tesis görseli bir tesisin adını taşır",
+                Directory.GetFiles(Path.Combine(ArtResourcesRoot, data.BuildingIconFolder), "*.png")
+                    .All(file => buildings.Contains(Path.GetFileNameWithoutExtension(file))));
             string[] statIcons = { data.TreasuryIcon, data.MoneyIcon, data.PopulationIcon, data.SatisfactionHighIcon, data.SatisfactionLowIcon };
             check("arayüz: üst bar ve para görselleri var", statIcons.All(path =>
                 !string.IsNullOrEmpty(path) && File.Exists(Path.Combine(ArtResourcesRoot, path + ".png"))));

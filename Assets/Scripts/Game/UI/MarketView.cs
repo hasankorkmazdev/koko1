@@ -9,10 +9,13 @@ namespace GeoWar.Game
     // Pazar ekranı: tüm kaynakların fiyatı ve pazardaki miktarı. Satıra dokununca teklif penceresi açılır.
     public sealed class MarketView
     {
-        private const int ColumnPrice = 0;
-        private const int ColumnChange = 1;
-        private const int ColumnOffered = 2;
+        private const int ColumnChange = 0;
+        private const int ColumnOffered = 1;
+        private const int ColumnPrice = 2;
         private const int FullPercent = 100;
+
+        // GeoWar.uss içindeki .gw-table-warning geçiş süresiyle aynıdır.
+        private const long WarningPulseMs = 600;
 
         private static readonly Color Muted = UiColors.Hex("#B5AE92");
 
@@ -23,6 +26,9 @@ namespace GeoWar.Game
         private readonly ScreenFrame _screen;
         private readonly MarketOfferView _offers;
         private readonly List<ResourceRow> _rows = new List<ResourceRow>();
+        private readonly IVisualElementScheduledItem _warningPulse;
+
+        private bool _warningDim;
 
         public bool IsOpen { get; private set; }
 
@@ -35,7 +41,7 @@ namespace GeoWar.Game
             _screen = new ScreenFrame(frame, session, "PAZAR", Close);
             _offers = new MarketOfferView(frame, session, detail, OnTraded);
 
-            ResourceRow.AddHeader(_screen.Root, "Kaynak", "Fiyat", "Değişim", "Pazarda");
+            ResourceRow.AddHeader(_screen.Root, "Kaynak", "Değişim", "Pazarda", "Fiyat");
 
             ScrollView scroll = UiBuilder.VerticalScroll(_screen.Root, "gw-builder-scroll");
             foreach (ResourceGroupData group in session.Ui.ResourceGroups)
@@ -48,12 +54,17 @@ namespace GeoWar.Game
                     _rows.Add(row);
                 }
             }
+
+            // Uyarılar hep birlikte atar; ekran kapalıyken saat durur.
+            _warningPulse = _screen.Root.schedule.Execute(PulseWarnings).Every(WarningPulseMs);
+            _warningPulse.Pause();
         }
 
         public void Open()
         {
             IsOpen = true;
             _screen.SetVisible(true);
+            _warningPulse.Resume();
             Refresh();
             Debug.Log("GeoWarUi market open");
         }
@@ -67,6 +78,7 @@ namespace GeoWar.Game
 
             IsOpen = false;
             _screen.SetVisible(false);
+            _warningPulse.Pause();
             _offers.Close();
             _detail.Close();
             _closed();
@@ -101,6 +113,15 @@ namespace GeoWar.Game
             _changed();
         }
 
+        private void PulseWarnings()
+        {
+            _warningDim = !_warningDim;
+            foreach (ResourceRow row in _rows)
+            {
+                row.SetWarningDim(_warningDim);
+            }
+        }
+
         private void FillRow(ResourceRow row)
         {
             WorldState world = _session.World;
@@ -127,6 +148,8 @@ namespace GeoWar.Game
 
             long offered = MarketCommands.OthersOfferMilli(world, _session.Player, resource);
             row.SetValue(ColumnOffered, NumberFormat.Amount(offered), offered > 0 ? UiColors.Text : UiColors.Warn);
+
+            row.SetWarning(StockReport.RunsOutWithin(world, _session.Player, resource, _session.Ui.MarketWarningDays));
         }
     }
 }

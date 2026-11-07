@@ -39,6 +39,7 @@ namespace GeoWar.Tests
             CountryReportTests.Run((name, passed) => Check(name, passed, true), _definition);
             PopulationTests.Run((name, passed) => Check(name, passed, true), _definition);
             RebellionTests.Run((name, passed) => Check(name, passed, true), _definition);
+            TaxTests.Run((name, passed) => Check(name, passed, true), _definition);
 
             Console.WriteLine(_checks + " kontrol, " + _failures + " hata");
             return _failures == 0 ? 0 : 1;
